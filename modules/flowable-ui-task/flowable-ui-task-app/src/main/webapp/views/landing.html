@@ -1,18 +1,42 @@
+<div class="row">
+	<div class="col-md-6">
+		<div id={{app.id}} class="app-wrapper" ng-repeat="app in model.apps">
+			<div class="app {{app.theme}}">
+				<a href="{{app.fixedUrl}}">
+					<div class="app-content">
+						<h3>{{app.titleKey && (app.titleKey | translate) || app.name}}</h3>
 
-<div id={{app.id}} class="app-wrapper" ng-repeat="app in model.apps">
-    <div class="app {{app.theme}}">
-        <a href="{{app.fixedUrl}}">
-            <div class="app-content">
-                <h3>{{app.titleKey && (app.titleKey | translate) || app.name}}</h3>
-
-                <p>{{app.descriptionKey && (app.descriptionKey | translate) || app.description}}</p>
-            </div>
-            <div class="backdrop">
-                <i class="{{app.icon}}"></i>
-            </div>
-            <div class="logo">
-                <i class="{{app.icon}}"></i>
-            </div>
-        </a>
-    </div>
+						<p>{{app.descriptionKey && (app.descriptionKey | translate) || app.description}}</p>
+					</div>
+					<div class="backdrop">
+						<i class="{{app.icon}}"></i>
+					</div>
+					<div class="logo">
+						<i class="{{app.icon}}"></i>
+					</div>
+				</a>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-6">
+		<div style="height:250px; width:250px; margin: 20px auto;">
+			<canvas id="base" class="chart-base" chart-type="type" chart-data="data" chart-labels="labels" chart-options="options"></canvas> 
+		</div>
+		<table class="table dash">
+			<tr class="dashtitle">
+				<th>{{'APP.DASHBOARD.PROCESSES' | translate }}</th>
+				<th>{{'APP.DASHBOARD.PROCESSESINTSANCE' | translate }}</th>
+				<th>{{'APP.DASHBOARD.TASKS' | translate }}</th>
+				<th>{{'APP.DASHBOARD.USER' | translate }}</th>
+				<th>{{'APP.DASHBOARD.DATE' | translate }}</th>
+			</tr>
+			<tr  ng-repeat="list in model.dashList">
+				<td>{{list.processDefinitionName}}</td>
+				<td><a href="workflow/#/apps/{{list.deploymentKey}}/processes">{{list.processName}}</a></td>
+				<td>{{list.name}}</td>
+				<td>{{list.assignee}}</td>
+				<td>{{list.created | dateformat:'fromNow'}}</td>
+			</tr>
+		</table>
+	</div>
 </div>

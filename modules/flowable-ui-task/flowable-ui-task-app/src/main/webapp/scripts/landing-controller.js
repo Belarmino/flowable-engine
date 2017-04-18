@@ -14,7 +14,8 @@ flowableApp.controller('LandingController', ['$scope','$window', '$location', '$
     function ($scope, $window, $location, $http, $translate, $modal, RuntimeAppDefinitionService, $rootScope) {
 
         $scope.model = {
-          loading: true
+          loading: true,
+		  dashList:[]
         };
 
         $translate('APP.ACTION.DELETE').then(function(message) {
@@ -51,9 +52,67 @@ flowableApp.controller('LandingController', ['$scope','$window', '$location', '$
                     workflow: baseUrl + '/workflow/'
                 };
 
+				
+				//GET INFO FOR DASH
+				var idx = 0;
+				$scope.labels = [];
+				$scope.data = [];
+				$scope.type = "pie";
+				$scope.options = {
+					title: {
+						display: true,
+						text: 'Processos Activos'
+					},
+					legend: {
+						display: true,
+						position: 'bottom'
+					}
+				};
+				
+				for(;idx<$scope.model.apps.length;idx++){
+					if(!!$scope.model.apps[idx].deploymentKey){
+						$scope.appGetProcessInstance($scope.model.apps[idx].deploymentKey);	
+					}
+				}
 
             })
         };
+		
+		$scope.appGetProcessInstance = function(_deploymentKey) {
+			var params = {sort: "created-desc", page: 0, deploymentKey: _deploymentKey, state: "running"};
+            $http({method: 'POST', url: FLOWABLE.CONFIG.contextRoot + '/app/rest/query/process-instances',data:params})
+			.success(function(response, status, headers, config) {
+				if(response.total > 0){
+					var idx = 0, _appName="";
+					for(;idx<response.total;idx++){
+						if(!!response.data[idx].id){
+							$scope.appGetTask(response.data[idx].id,response.data[idx].name,_deploymentKey);
+							_appName = response.data[idx].processDefinitionName;
+						}
+					}
+					$scope.labels.push(_appName);
+					$scope.data.push(response.total);
+				}
+			}).error(function(response, status, headers, config) {
+					console.log('Something went wrong: ' + response);
+			});
+        };
+		
+		$scope.appGetTask = function(_processInstanceId, _processName,_deploymentKey) {
+			var params = {processInstanceId: _processInstanceId};
+            $http({method: 'POST', url: FLOWABLE.CONFIG.contextRoot + '/app/rest/query/tasks',data:params})
+			.success(function(response, status, headers, config) {
+				if(response.total > 0){
+					var i = 0, _etapas = "";
+					for(;i < response.total; i++){
+						$scope.model.dashList.push({processName:_processName,processDefinitionName:response.data[i].processDefinitionName, deploymentKey:_deploymentKey, name:response.data[i].name, assignee:(response.data[i].assignee==null)?"??":response.data[i].assignee.fullName, created:response.data[i].created});
+					}
+				}
+			}).error(function(response, status, headers, config) {
+					console.log('Something went wrong: ' + response);
+			});
+        };
+		
 
         $scope.appSelected = function(app) {
             if(app.fixedUrl) {

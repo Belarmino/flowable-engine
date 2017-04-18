@@ -19,7 +19,8 @@ var flowableApp = angular.module('flowableLanding', [
   'ngRoute',
   'mgcrea.ngStrap',
   'ngAnimate',
-  'pascalprecht.translate'
+  'pascalprecht.translate',
+  'chart.js'
 ]);
 
 var flowableModule = flowableApp;
@@ -148,13 +149,24 @@ flowableApp
                     $window.location.reload();
                 });
         };
-
-        $http.get(FLOWABLE.CONFIG.contextRoot + '/app/rest/account')
+		
+		$http.get(FLOWABLE.CONFIG.contextRoot + '/app/rest/account')
         	.success(function (data, status, headers, config) {
               	$rootScope.account = data;
                	$rootScope.invalidCredentials = false;
  				$rootScope.authenticated = true;
           	});
+			
+		$rootScope.hasAppPemission = function (perm) {
+			if(!!$rootScope.account){
+				for(var i=0;i<$rootScope.account.privileges.length;i++){
+					if($rootScope.account.privileges[i]==perm){
+						return true;
+					}
+				}
+			}
+			return false;
+        };
 
      }])
      .run(['$rootScope', '$location', '$window', '$translate', '$modal',
@@ -195,4 +207,21 @@ flowableApp
             }
             $window.location.href = baseUrl;
         };
-}]);
+}])
+ // Moment-JS date-formatting filter
+ .filter('dateformat', function() {
+    return function(date, format) {
+        if (date) {
+            if(format == 'fromNow') {
+                return moment(date).fromNow();
+            } else if(format == 'fromNowFull') {
+                return moment(date).fromNow() + ' (' + moment(date).format('MMMM Do YYYY') + ')';
+            } else if (format) {
+				return moment(date).format(format);
+            } else {
+                return moment(date).calendar();
+            }
+        }
+        return '';
+    };
+ });
