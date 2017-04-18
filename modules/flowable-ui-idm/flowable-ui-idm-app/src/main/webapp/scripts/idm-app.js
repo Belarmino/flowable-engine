@@ -316,6 +316,17 @@ flowableApp
         $rootScope.logout = function() {
             AuthenticationSharedService.logout();
         };
+		
+		$rootScope.hasAppPemission = function (perm) {
+			if(!!$rootScope.account){
+				for(var i=0;i<$rootScope.account.privileges.length;i++){
+					if($rootScope.account.privileges[i]==perm){
+						return true;
+					}
+				}
+			}
+			return false;
+        };
 
         // Call when the 401 response is returned by the client
         $rootScope.$on('event:auth-loginRequired', function(rejection) {

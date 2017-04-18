@@ -67,6 +67,10 @@ flowableModeler
             templateUrl: appResourceRoot + 'views/forms.html',
             controller: 'FormsCtrl'
         })
+		.when('/reports', {
+            templateUrl: appResourceRoot + 'views/reports.html',
+            controller: 'ReportsCtrl'
+        })
         .when('/forms/:modelId', {
             templateUrl: appResourceRoot + 'views/form.html',
             controller: 'FormCtrl'
@@ -106,6 +110,10 @@ flowableModeler
         .when('/form-editor/:modelId', {
             templateUrl: appResourceRoot + 'views/form-builder.html',
             controller: 'FormBuilderController'
+        })
+		.when('/report-editor/:modelId', {
+            templateUrl: appResourceRoot + 'views/report-builder.html',
+            controller: 'ReportBuilderController'
         })
         .when('/decision-table-editor/:modelId', {
             templateUrl: appResourceRoot + 'views/decision-table-editor.html',
@@ -189,6 +197,11 @@ flowableModeler
                     'id': 'forms',
                     'title': 'GENERAL.NAVIGATION.FORMS',
                     'path': '/forms'
+                },
+				{
+                    'id': 'reports',
+                    'title': 'GENERAL.NAVIGATION.REPORTS',
+                    'path': '/reports'
                 },
                 {
                     'id': 'decision-tables',
@@ -316,7 +329,18 @@ flowableModeler
                         $window.location.href = '/';
                         $window.location.reload();
                     });
-            }  	
+            }
+			
+			$rootScope.hasAppPemission = function (perm) {
+				if(!!$rootScope.account){
+					for(var i=0;i<$rootScope.account.privileges.length;i++){
+						if($rootScope.account.privileges[i]==perm){
+							return true;
+						}
+					}
+				}
+				return false;
+			}
         }
   ])
   .run(['$rootScope', '$location', '$translate', '$window', '$modal',
