@@ -1,9 +1,10 @@
 {
     "GENERAL" : {
-        "MAIN-TITLE": "Flowable Editor",
+        "MAIN-TITLE": "Flowdocs Editor",
         "NAVIGATION" : {
             "PROCESSES": "Processes",
             "FORMS": "Forms",
+			"REPORTS": "Reports",
             "DECISION-TABLES": "Decision Tables",
             "APPS": "Apps"
         },
@@ -110,6 +111,32 @@
         }
     },
 
+	"REPORTS-LIST" : {
+        "TITLE" : "Report",
+        "SEARCH-PLACEHOLDER": "Search",
+        "ACTION" : {
+            "CREATE": "Create Report",
+            "CREATE-INLINE": "Create a new Report now!",
+            "SHOW-MORE": "Show more..."
+        },
+
+        "FILTER" : {
+            "REPORTS": "Report",
+            "REPORTS-COUNT": "There are {{total}} report",
+            "REPORTS-ONE": "There is one report",
+            "REPORTS-EMPTY": "There are no report.  To add one, click Create Report.",
+            "FILTER-TEXT": ", matching \"{{filterText}}\"",
+            "FILTER-TEXT-EMPTY": "There is no report matching \"{{filterText}}\""
+        },
+
+        "SORT": {
+            "MODIFIED-ASC": "Oldest",
+            "MODIFIED-DESC": "Last modified",
+            "NAME-ASC": "Name, A-Z",
+            "NAME-DESC": "Name, Z-A"
+        }
+    },
+	
     "DECISION-TABLES-LIST": {
         "TITLE": "Decision Tables",
         "SEARCH-PLACEHOLDER": "Search",
@@ -283,6 +310,40 @@
           "USE-AS-NEW-UNRESOLVED-MODEL": "Model '{{name}}' with internal id {{id}}, created by {{createdBy}}"
         }
     },
+	
+	"REPORT": {
+      "NAME": "Report name",
+      "KEY": "Report key",
+      "DESCRIPTION": "Description",
+      "ACTION": {
+            "DETAILS": "Show details",
+            "EDIT": "Modify model properties",
+            "DELETE": "Delete this report",
+            "CREATE-CONFIRM": "Create new report",
+            "DUPLICATE-CONFIRM": "Duplicate the report",
+            "OPEN-IN-EDITOR": "Report Editor",
+            "EDIT-CONFIRM": "Save",
+            "DELETE-CONFIRM": "Delete Report",
+            "USE-AS-NEW-VERSION": "Use as new version"
+
+        },
+        "POPUP": {
+          "CREATE-TITLE": "Create a new report",
+          "DUPLICATE-TITLE": "Duplicate report",
+          "CREATE-DESCRIPTION": "You need to give a name for the new report and you may want to add a description at the same time.",
+          "DUPLICATE-DESCRIPTION": "You need to give a name for the new report and you may want to add a description at the same time.",
+          "SAVE-REPORT-TITLE": "Save report",
+          "EDIT-DESCRIPTION": "Change any of the report properties below and then press Save to update the report.",
+          "DELETE-DESCRIPTION": "Are you sure you want to delete the report \"{{name}}\"?",
+          "EDIT-TITLE":"Edit report details",
+          "DELETE-TITLE": "Delete report",
+          "USE-AS-NEW-TITLE": "Use as new version",
+          "USE-AS-NEW-VERSION": "Use as new version",
+          "USE-AS-NEW-DESCRIPTION": "Are you sure you want to use version {{version}} to create a new version of \"{{name}}\"?",
+          "USE-AS-NEW-UNRESOLVED-MODELS-ERROR": "Could not fully restore the app model to the chosen version: some referenced models are missing due to being deleted in the past. Please update the app model accordingly. Missing models:",
+          "USE-AS-NEW-UNRESOLVED-MODEL": "Model '{{name}}' with internal id {{id}}, created by {{createdBy}}"
+        }
+    },
 
     "DECISION-TABLE": {
         "NAME": "Decision Table name",
@@ -408,7 +469,7 @@
           "IMPORT": {
               "DROPZONE": "Drop a .zip app definition file",
               "CANCEL-UPLOAD": "Cancel the upload",
-              "RENEWIDM-IDS": "Renew the user and group identifiers when importing step and BPMN models. This is often required when importing the app definition into a different Flowable environment. It will try to link the human steps and user tasks to the right user and group in this target environment.",
+              "RENEWIDM-IDS": "Renew the user and group identifiers when importing step and BPMN models. This is often required when importing the app definition into a different Flowdocs environment. It will try to link the human steps and user tasks to the right user and group in this target environment.",
               "ERROR": "Error while processing the app definition file",
               "NO-DROP": "Drag and drop not supported"
           },
@@ -521,7 +582,7 @@
 
     "TOUR": {
         "WELCOME-TITLE": "Welcome, {{userName}}",
-        "WELCOME-CONTENT": "This a short tour of the Flowable editor. The next few steps will guide you through the different sections of the application to get you started. Press the ESC key to stop at any time." ,
+        "WELCOME-CONTENT": "This a short tour of the Flowdocs editor. The next few steps will guide you through the different sections of the application to get you started. Press the ESC key to stop at any time." ,
         "PALETTE-TITLE": "The Palette",
         "PALETTE-CONTENT": "All the available constructs to create a business process can be found here. They are arranged in logical groups. To open a group simply click on it:",
         "CANVAS-TITLE": "The Canvas",
@@ -533,7 +594,7 @@
         "TOOLBAR-TITLE": "The Toolbar",
         "TOOLBAR-CONTENT": "All the actions can be found here: saving or validating a model, copy and pasting parts of a process, and so on. Hover over the buttons to get a description for an action.",
         "END-TITLE": "The End",
-        "END-CONTENT": "That's it! You can now start modeling your processes. If you have any questions, feel free to ask them on the <a href=\"http://forum.flowable.org/\" target=\"_blank\">Flowable Forum</a> "
+        "END-CONTENT": "That's it! You can now start modeling your processes. If you have any questions, feel free to ask them on the <a href=\"http://forum.Flowdocs.org/\" target=\"_blank\">Flowdocs Forum</a> "
     },
 
     "FEATURE-TOUR" : {
@@ -781,7 +842,7 @@
     "MODEL.SAVE.SAVING" : "Saving model",
     "MODEL.LASTMODIFIEDDATE" : "Last saved",
     "MODEL.SAVE.ERROR": "Unexpected error: could not save model",
-    "MODEL.VALIDATIONERRORS": "Note that the model contains validation errors. This means that the model can not be deployed on the Flowable Engine in its current state.",
+    "MODEL.VALIDATIONERRORS": "Note that the model contains validation errors. This means that the model can not be deployed on the Flowdocs Engine in its current state.",
     "MODEL.CONFLICT.WRITE": "Could not save model: '{{userFullName}}' has made changes to this model",
     "MODEL.CONFLICT.WRITE.OPTIONS": "Select an option to resolve this conflict:",
     "MODEL.CONFLICT.WRITE.OPTION.OVERWRITE": "Overwrite other model",

@@ -3,7 +3,7 @@
         "SELECT-FOLDER": "Select folder..."
     },
     "GENERAL": {
-        "MAIN-TITLE": "Flowable - My Tasks",
+        "MAIN-TITLE": "Flowdocs - My Tasks",
         "ERROR": {
             "GENERIC": "Sorry, an error occured...",
             "UNKNOWN": "Sorry, an error occured while performing the requested operation.",

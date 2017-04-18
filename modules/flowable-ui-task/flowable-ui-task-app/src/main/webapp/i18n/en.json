@@ -18,7 +18,7 @@
             "CANCEL": "Cancel",
             "CLOSE": "Close",
             "DEPLOY": "Deploy",
-            "ABOUT": "About Flowable"
+            "ABOUT": "About Flowdocs"
         }
     },
     "LOGIN": {
@@ -94,6 +94,14 @@
         },
         "MESSAGE": {
             "DELETED": "App was successfully removed"
+        },
+		
+		"DASHBOARD": {
+            "PROCESSES": "Process",
+			"PROCESSESINTSANCE": "Process Instance",
+			"TASKS": "Task",
+			"USER": "User",
+			"DATE": "Date"
         }
     }
 }

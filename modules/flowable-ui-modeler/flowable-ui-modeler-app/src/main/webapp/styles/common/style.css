@@ -493,7 +493,7 @@ a.dropdown-toggle {
 /* Navigation */
 
 .navbar {
-    background-color: #333333;
+    background-color: #4C992A;
     border: none;
     min-height: 40px;
 }
@@ -513,7 +513,7 @@ a.dropdown-toggle {
 }
 
 .navbar .btn-group .btn-default:hover, .navbar .btn-group .btn-default:focus {
-    background-color: #121212;
+    background-color: rgba(34, 109, 1, 0.96);
 }
 
 .navbar .btn-group .btn-default {

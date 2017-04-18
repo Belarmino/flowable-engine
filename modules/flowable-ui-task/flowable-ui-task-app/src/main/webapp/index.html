@@ -8,7 +8,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#ffffff">
-    <title>Flowable Task</title>
+    <title>Flowdocs Task</title>
 
     <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png?v=Om5N75Y123">
     <link rel="icon" type="image/png" href="images/favicon-32x32.png?v=Om5N75Y123" sizes="32x32">
@@ -45,11 +45,14 @@
                     </a>
                 </div>
                 <div class="pull-right">
+					<img ng-src="{{appResourceRoot}}images/caixa.png">
                     <div class="dropdown btn-group btn-group-sm">
                         <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"> {{account.firstName}} {{account.lastName}}
                             <span class="glyphicon glyphicon-chevron-down" style="font-size: 10px" aria-hidden="true"></span>
                         </button>
                         <ul class="dropdown-menu pull-right">
+							<li ng-if="hasAppPemission('access-idm')"><a href="/flowable-idm/">Idm</a></li>
+							<li ng-if="hasAppPemission('access-modeler')"><a href="/flowable-modeler/">Modeler</a></li>
                             <li><a ng-click="logout()" translate="GENERAL.ACTION.LOGOUT"></a></li>
                         </ul>
                     </div>
@@ -108,6 +111,9 @@
     <script src="libs/angular-strap_2.1.6/angular-strap.min.js"></script>
     <script src="libs/angular-strap_2.1.6/angular-strap.tpl.min.js"></script>
     <script src="libs/autofill-events_1.0.0/autofill-event.js"></script>
+	<script src="libs/momentjs_2.5.1/momentjs.min.js"></script>
+	<script src="libs/angular-chart.js/Chart.min.js"></script>
+	<script src="libs/angular-chart.js/angular-chart.min.js"></script>
 
     <!-- Configuration -->
     <script src="scripts/app-cfg.js?v=2"></script>

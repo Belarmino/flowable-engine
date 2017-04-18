@@ -7,7 +7,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Flowable Workflow</title>
+    <title>Flowdocs Workflow</title>
     <link rel="icon" type="image/ico" href="../favicon.ico">
 
     <!-- build:css styles/3thparty.css -->
@@ -41,6 +41,7 @@
                     {{activeAppDefinition.name}}
                 </span>
                 <i class="glyphicon {{activeAppDefinition.icon}}"></i>
+				<img ng-src="{{appResourceRoot}}../images/caixa.png">
                 <div class="dropdown btn-group btn-group-sm">
                     <button type="button" class="btn btn-default dropdown-toggle"
                             data-toggle="dropdown">{{account.firstName && account.firstName != 'null' ? account.firstName : ''}} {{account.lastName && account.lastName != 'null' ? account.lastName : ''}}

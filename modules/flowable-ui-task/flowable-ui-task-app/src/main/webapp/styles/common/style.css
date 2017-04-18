@@ -493,7 +493,7 @@ a.dropdown-toggle {
 /* Navigation */
 
 .navbar {
-    background-color: #333333;
+    background-color: #4C992A;
     border: none;
     min-height: 40px;
 }
@@ -513,7 +513,7 @@ a.dropdown-toggle {
 }
 
 .navbar .btn-group .btn-default:hover, .navbar .btn-group .btn-default:focus {
-    background-color: #121212;
+    background-color: rgba(34, 109, 1, 0.96);
 }
 
 .navbar .btn-group .btn-default {
@@ -2789,7 +2789,7 @@ ul#strength > li:last-child {
 
     .app-wrapper {
         float: left;
-        width: 350px;
+        width: 50%;
     }
 }
 
@@ -3266,3 +3266,12 @@ ul#strength > li:last-child {
   height:auto;
 }
 
+.dash{
+	border:1px solid #4C992A;
+}
+.dashtitle{
+	background:#4C992A;
+}
+.dash th{
+	color:#fff;
+}

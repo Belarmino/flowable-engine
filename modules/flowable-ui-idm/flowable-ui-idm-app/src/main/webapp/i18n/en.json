@@ -1,6 +1,6 @@
 {
    "GENERAL": {
-        "MAIN-TITLE": "Flowable",
+        "MAIN-TITLE": "Flowdocs",
         "ERROR": {
             "GENERIC": "Sorry, an error occured...",
             "UNKNOWN": "Sorry, an error occured while performing the requested operation.",
@@ -18,7 +18,7 @@
             "CANCEL": "Cancel",
             "CLOSE": "Close",
             "DEPLOY": "Deploy",
-            "ABOUT": "About Flowable"
+            "ABOUT": "About Flowdocs"
         },
         "MESSAGE": {
             "SELECT-PEOPLE-HELP": "Use &uparrow; and &downarrow; to select and press enter to confirm",
@@ -79,7 +79,7 @@
     },
     "IDM": {
       "GENERAL" : {
-        "MAIN-TITLE": "Flowable - Identity Management",
+        "MAIN-TITLE": "Flowdocs - Identity Management",
         "NAVIGATION": {
             "PROFILE": "Personal",
             "USER-MGMT": "Users",
@@ -92,7 +92,7 @@
           "SAVE": "Save",
           "CLOSE": "Close",
           "LOGOUT": "Sign out",
-          "ABOUT": "About Flowable"
+          "ABOUT": "About Flowdocs"
         },
         "ERROR": {
             "GENERIC": "Sorry, an error occured...",
