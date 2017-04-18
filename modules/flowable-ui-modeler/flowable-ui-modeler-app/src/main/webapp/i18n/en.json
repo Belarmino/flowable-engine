@@ -408,6 +408,8 @@
         "DESCRIPTION": "Description",
         "ICON": "Icon",
         "THEME": "Theme",
+        "GROUPS-ACCESS": "Groups access, separated by commas",
+		"USERS-ACCESS": "Users access, separated by commas",
         "ACTION": {
             "DETAILS": "Show details",
             "EDIT": "Modify app definition properties",
@@ -500,7 +502,8 @@
             "PEOPLE": "People",
             "GROUP-OF-PEOPLE": "Group of people",
             "UPLOAD": "Upload",
-            "EXPRESSION": "Expression"
+            "EXPRESSION": "Expression",
+            "DECIMAL": "Decimal"
         },
         "TABS": {
             "GENERAL": "General",
