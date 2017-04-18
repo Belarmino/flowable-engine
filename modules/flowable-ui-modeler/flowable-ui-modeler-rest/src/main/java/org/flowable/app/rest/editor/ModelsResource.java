@@ -113,6 +113,14 @@ public class ModelsResource {
                 throw new InternalServerErrorException("Error creating form");
             }
 
+        } else if (modelRepresentation.getModelType() != null && modelRepresentation.getModelType().equals(AbstractModel.MODEL_TYPE_REPORT)) {
+            try {
+                json = objectMapper.writeValueAsString(new FormModel());
+            } catch (Exception e) {
+                logger.error("Error creating report model", e);
+                throw new InternalServerErrorException("Error creating report");
+            }
+
         } else if (modelRepresentation.getModelType() != null && modelRepresentation.getModelType().equals(AbstractModel.MODEL_TYPE_DECISION_TABLE)) {
             try {
                 DecisionTableDefinitionRepresentation decisionTableDefinition = new DecisionTableDefinitionRepresentation();
@@ -172,7 +180,6 @@ public class ModelsResource {
             stencilNode.put("id", "StartNoneEvent");
             json = editorNode.toString();
         }
-
         Model newModel = modelService.createModel(modelRepresentation, json, SecurityUtils.getCurrentUserObject());
         return new ModelRepresentation(newModel);
     }

@@ -504,6 +504,7 @@ public class ModelServiceImpl implements ModelService {
                 handleBpmnProcessDecisionTaskModelRelations(model, jsonNode);
 
             } else if (model.getModelType().intValue() == Model.MODEL_TYPE_FORM ||
+                    model.getModelType().intValue() == Model.MODEL_TYPE_REPORT ||
                     model.getModelType().intValue() == Model.MODEL_TYPE_DECISION_TABLE) {
 
                 jsonNode.put("name", model.getName());
