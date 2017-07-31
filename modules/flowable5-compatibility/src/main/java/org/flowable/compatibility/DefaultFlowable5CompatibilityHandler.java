@@ -13,14 +13,14 @@
 
 package org.flowable.compatibility;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.el.PropertyNotFoundException;
 
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.ProcessEngineConfiguration;
@@ -50,13 +50,13 @@ import org.flowable.engine.common.api.FlowableIllegalArgumentException;
 import org.flowable.engine.common.api.FlowableObjectNotFoundException;
 import org.flowable.engine.common.api.FlowableOptimisticLockingException;
 import org.flowable.engine.common.api.delegate.event.FlowableEvent;
+import org.flowable.engine.common.impl.javax.el.PropertyNotFoundException;
 import org.flowable.engine.common.runtime.Clock;
 import org.flowable.engine.compatibility.Flowable5CompatibilityHandler;
 import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.form.StartFormData;
 import org.flowable.engine.impl.cmd.AddIdentityLinkCmd;
-import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.identity.Authentication;
 import org.flowable.engine.impl.persistence.deploy.ProcessDefinitionCacheEntry;
 import org.flowable.engine.impl.persistence.entity.DeploymentEntity;
@@ -67,14 +67,13 @@ import org.flowable.engine.impl.persistence.entity.TaskEntity;
 import org.flowable.engine.impl.persistence.entity.TaskEntityImpl;
 import org.flowable.engine.impl.persistence.entity.VariableInstance;
 import org.flowable.engine.impl.repository.DeploymentBuilderImpl;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.Job;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.task.Attachment;
 import org.flowable.engine.task.Comment;
-
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * @author Joram Barrez
@@ -84,6 +83,7 @@ public class DefaultFlowable5CompatibilityHandler implements Flowable5Compatibil
 
     protected DefaultProcessEngineFactory processEngineFactory;
     protected volatile ProcessEngine processEngine;
+    protected volatile org.flowable.engine.ProcessEngineConfiguration flowable6ProcessEngineConfiguration;
 
     public ProcessDefinition getProcessDefinition(final String processDefinitionId) {
         final ProcessEngineConfigurationImpl processEngineConfig = (ProcessEngineConfigurationImpl) getProcessEngine().getProcessEngineConfiguration();
@@ -942,7 +942,7 @@ public class DefaultFlowable5CompatibilityHandler implements Flowable5Compatibil
         if (processEngine == null) {
             synchronized (this) {
                 if (processEngine == null) {
-                    processEngine = getProcessEngineFactory().buildProcessEngine(Context.getProcessEngineConfiguration());
+                    processEngine = getProcessEngineFactory().buildProcessEngine(CommandContextUtil.getProcessEngineConfiguration());
                 }
             }
         }
@@ -958,6 +958,14 @@ public class DefaultFlowable5CompatibilityHandler implements Flowable5Compatibil
 
     public void setProcessEngineFactory(DefaultProcessEngineFactory processEngineFactory) {
         this.processEngineFactory = processEngineFactory;
+    }
+
+    public org.flowable.engine.ProcessEngineConfiguration getFlowable6ProcessEngineConfiguration() {
+        return flowable6ProcessEngineConfiguration;
+    }
+
+    public void setFlowable6ProcessEngineConfiguration(org.flowable.engine.ProcessEngineConfiguration flowable6ProcessEngineConfiguration) {
+        this.flowable6ProcessEngineConfiguration = flowable6ProcessEngineConfiguration;
     }
 
     protected org.activiti.engine.impl.persistence.entity.TaskEntity convertToActiviti5TaskEntity(TaskEntity task) {

@@ -1,10 +1,16 @@
+/* Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.flowable.rest.api.jpa;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -49,15 +55,16 @@ import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.common.api.FlowableException;
+import org.flowable.engine.common.impl.db.DbSchemaManager;
+import org.flowable.engine.common.impl.interceptor.Command;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 import org.flowable.engine.impl.ProcessEngineImpl;
 import org.flowable.engine.impl.asyncexecutor.AsyncExecutor;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
-import org.flowable.engine.impl.db.DbSqlSession;
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.interceptor.CommandExecutor;
 import org.flowable.engine.impl.test.AbstractTestCase;
 import org.flowable.engine.impl.test.TestHelper;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.idm.api.Group;
 import org.flowable.idm.api.User;
@@ -72,11 +79,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
+
 import junit.framework.AssertionFailedError;
 
 public class BaseJPARestTestCase extends AbstractTestCase {
 
-    private static Logger log = LoggerFactory.getLogger(BaseJPARestTestCase.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseJPARestTestCase.class);
 
     protected static final int HTTP_SERVER_PORT = 7979;
     protected static final String SERVER_URL_PREFIX = "http://localhost:7979/service/";
@@ -130,7 +143,7 @@ public class BaseJPARestTestCase extends AbstractTestCase {
                     try {
                         server.stop();
                     } catch (Exception e) {
-                        log.error("Error stopping server", e);
+                        LOGGER.error("Error stopping server", e);
                     }
                 }
             }
@@ -141,7 +154,7 @@ public class BaseJPARestTestCase extends AbstractTestCase {
     public void runBare() throws Throwable {
         createUsers();
 
-        log.error(EMPTY_LINE);
+        LOGGER.error(EMPTY_LINE);
 
         try {
 
@@ -150,14 +163,14 @@ public class BaseJPARestTestCase extends AbstractTestCase {
             super.runBare();
 
         } catch (AssertionFailedError e) {
-            log.error(EMPTY_LINE);
-            log.error("ASSERTION FAILED: {}", e, e);
+            LOGGER.error(EMPTY_LINE);
+            LOGGER.error("ASSERTION FAILED: {}", e, e);
             exception = e;
             throw e;
 
         } catch (Throwable e) {
-            log.error(EMPTY_LINE);
-            log.error("EXCEPTION: {}", e, e);
+            LOGGER.error(EMPTY_LINE);
+            LOGGER.error("EXCEPTION: {}", e, e);
             exception = e;
             throw e;
 
@@ -199,7 +212,7 @@ public class BaseJPARestTestCase extends AbstractTestCase {
             server.setHandler(getServletContextHandler(applicationContext));
             server.start();
         } catch (Exception e) {
-            log.error("Error starting server", e);
+            LOGGER.error("Error starting server", e);
         }
     }
 
@@ -272,7 +285,7 @@ public class BaseJPARestTestCase extends AbstractTestCase {
      * the DB is not clean. If the DB is not clean, it is cleaned by performing a create a drop.
      */
     protected void assertAndEnsureCleanDb() throws Throwable {
-        log.debug("verifying that db is clean after test");
+        LOGGER.debug("verifying that db is clean after test");
         Map<String, Long> tableCounts = managementService.getTableCount();
         StringBuilder outputMessage = new StringBuilder();
         for (String tableName : tableCounts.keySet()) {
@@ -286,17 +299,17 @@ public class BaseJPARestTestCase extends AbstractTestCase {
         }
         if (outputMessage.length() > 0) {
             outputMessage.insert(0, "DB NOT CLEAN: \n");
-            log.error(EMPTY_LINE);
-            log.error(outputMessage.toString());
+            LOGGER.error(EMPTY_LINE);
+            LOGGER.error(outputMessage.toString());
 
-            log.info("dropping and recreating db");
+            LOGGER.info("dropping and recreating db");
 
             CommandExecutor commandExecutor = ((ProcessEngineImpl) processEngine).getProcessEngineConfiguration().getCommandExecutor();
             commandExecutor.execute(new Command<Object>() {
                 public Object execute(CommandContext commandContext) {
-                    DbSqlSession session = commandContext.getDbSqlSession();
-                    session.dbSchemaDrop();
-                    session.dbSchemaCreate();
+                    DbSchemaManager dbSchemaManager = CommandContextUtil.getProcessEngineConfiguration(commandContext).getDbSchemaManager();
+                    dbSchemaManager.dbSchemaDrop();
+                    dbSchemaManager.dbSchemaCreate();
                     return null;
                 }
             });
@@ -307,7 +320,7 @@ public class BaseJPARestTestCase extends AbstractTestCase {
                 Assert.fail(outputMessage.toString());
             }
         } else {
-            log.info("database was clean");
+            LOGGER.info("database was clean");
         }
     }
 
@@ -422,7 +435,7 @@ public class BaseJPARestTestCase extends AbstractTestCase {
         assertEquals(numberOfResultsExpected, dataNode.size());
 
         // Check presence of ID's
-        List<String> toBeFound = new ArrayList<String>(Arrays.asList(expectedResourceIds));
+        List<String> toBeFound = new ArrayList<>(Arrays.asList(expectedResourceIds));
         Iterator<JsonNode> it = dataNode.iterator();
         while (it.hasNext()) {
             String id = it.next().get("id").textValue();
@@ -457,7 +470,7 @@ public class BaseJPARestTestCase extends AbstractTestCase {
 
             // Check presence of ID's
             if (expectedResourceIds != null) {
-                List<String> toBeFound = new ArrayList<String>(Arrays.asList(expectedResourceIds));
+                List<String> toBeFound = new ArrayList<>(Arrays.asList(expectedResourceIds));
                 Iterator<JsonNode> it = dataNode.iterator();
                 while (it.hasNext()) {
                     String id = it.next().get("id").textValue();

@@ -58,7 +58,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @Service
 public class FlowableClientService {
 
-    private static final Logger log = LoggerFactory.getLogger(FlowableClientService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FlowableClientService.class);
 
     protected static final String[] PAGING_AND_SORTING_PARAMETER_NAMES = new String[] { "sort", "order", "size" };
 
@@ -86,7 +86,7 @@ public class FlowableClientService {
             builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
             sslsf = new SSLConnectionSocketFactory(builder.build(), SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
         } catch (Exception e) {
-            log.warn("Could not configure HTTP client to use SSL", e);
+            LOGGER.warn("Could not configure HTTP client to use SSL", e);
         }
 
         HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
@@ -124,9 +124,7 @@ public class FlowableClientService {
         FlowableServiceException exception = null;
         CloseableHttpClient client = getHttpClient(userName, password);
         try {
-            CloseableHttpResponse response = client.execute(request);
-
-            try {
+            try (CloseableHttpResponse response = client.execute(request)) {
                 InputStream responseContent = response.getEntity().getContent();
                 String strResponse = IOUtils.toString(responseContent);
 
@@ -140,25 +138,22 @@ public class FlowableClientService {
                     try {
                         bodyNode = objectMapper.readTree(strResponse);
                     } catch (Exception e) {
-                        log.debug("Error parsing error message", e);
+                        LOGGER.debug("Error parsing error message", e);
                     }
                     exception = new FlowableServiceException(extractError(bodyNode, "An error occurred while calling Flowable: " + response.getStatusLine()));
                 }
             } catch (Exception e) {
-                log.warn("Error consuming response from uri {}", request.getURI(), e);
+                LOGGER.warn("Error consuming response from uri {}", request.getURI(), e);
                 exception = wrapException(e, request);
-            } finally {
-                response.close();
             }
-
         } catch (Exception e) {
-            log.error("Error executing request to uri {}", request.getURI(), e);
+            LOGGER.error("Error executing request to uri {}", request.getURI(), e);
             exception = wrapException(e, request);
         } finally {
             try {
                 client.close();
             } catch (Exception e) {
-                log.warn("Error closing http client instance", e);
+                LOGGER.warn("Error closing http client instance", e);
             }
         }
 
@@ -182,8 +177,7 @@ public class FlowableClientService {
         FlowableServiceException exception = null;
         CloseableHttpClient client = getHttpClient(userName, password);
         try {
-            CloseableHttpResponse response = client.execute(request);
-            try {
+            try (CloseableHttpResponse response = client.execute(request)) {
                 boolean success = response.getStatusLine() != null && response.getStatusLine().getStatusCode() == expectedStatusCode;
                 if (success) {
                     httpResponse.setHeader("Content-Disposition", response.getHeaders("Content-Disposition")[0].getValue());
@@ -196,25 +190,22 @@ public class FlowableClientService {
                     try {
                         bodyNode = objectMapper.readTree(strResponse);
                     } catch (Exception e) {
-                        log.debug("Error parsing error message", e);
+                        LOGGER.debug("Error parsing error message", e);
                     }
                     exception = new FlowableServiceException(extractError(bodyNode, "An error occurred while calling Flowable: " + response.getStatusLine()));
                 }
             } catch (Exception e) {
-                log.warn("Error consuming response from uri {}", request.getURI(), e);
+                LOGGER.warn("Error consuming response from uri {}", request.getURI(), e);
                 exception = wrapException(e, request);
-            } finally {
-                response.close();
             }
-
         } catch (Exception e) {
-            log.error("Error executing request to uri {}", request.getURI(), e);
+            LOGGER.error("Error executing request to uri {}", request.getURI(), e);
             exception = wrapException(e, request);
         } finally {
             try {
                 client.close();
             } catch (Exception e) {
-                log.warn("Error closing http client instance", e);
+                LOGGER.warn("Error closing http client instance", e);
             }
         }
 
@@ -241,9 +232,7 @@ public class FlowableClientService {
         FlowableServiceException exception = null;
         CloseableHttpClient client = getHttpClient(userName, password);
         try {
-            CloseableHttpResponse response = client.execute(request);
-
-            try {
+            try (CloseableHttpResponse response = client.execute(request)) {
                 int statusCode = -1;
                 if (response.getStatusLine() != null) {
                     statusCode = response.getStatusLine().getStatusCode();
@@ -262,20 +251,17 @@ public class FlowableClientService {
                     exception = new FlowableServiceException(extractError(readJsonContent(response.getEntity().getContent()), "An error occurred while calling Flowable: " + response.getStatusLine()));
                 }
             } catch (Exception e) {
-                log.warn("Error consuming response from uri {}", request.getURI(), e);
+                LOGGER.warn("Error consuming response from uri {}", request.getURI(), e);
                 exception = wrapException(e, request);
-            } finally {
-                response.close();
             }
-
         } catch (Exception e) {
-            log.error("Error executing request to uri {}", request.getURI(), e);
+            LOGGER.error("Error executing request to uri {}", request.getURI(), e);
             exception = wrapException(e, request);
         } finally {
             try {
                 client.close();
             } catch (Exception e) {
-                log.warn("Error closing http client instance", e);
+                LOGGER.warn("Error closing http client instance", e);
             }
         }
 
@@ -299,9 +285,7 @@ public class FlowableClientService {
         FlowableServiceException exception = null;
         CloseableHttpClient client = getHttpClient(userName, password);
         try {
-            CloseableHttpResponse response = client.execute(request);
-
-            try {
+            try (CloseableHttpResponse response = client.execute(request)) {
                 JsonNode bodyNode = readJsonContent(response.getEntity().getContent());
 
                 int statusCode = -1;
@@ -317,20 +301,17 @@ public class FlowableClientService {
                     exception = new FlowableServiceException(extractError(readJsonContent(response.getEntity().getContent()), "An error occurred while calling Flowable: " + response.getStatusLine()));
                 }
             } catch (Exception e) {
-                log.warn("Error consuming response from uri {}", request.getURI(), e);
+                LOGGER.warn("Error consuming response from uri {}", request.getURI(), e);
                 exception = wrapException(e, request);
-            } finally {
-                response.close();
             }
-
         } catch (Exception e) {
-            log.error("Error executing request to uri {}", request.getURI(), e);
+            LOGGER.error("Error executing request to uri {}", request.getURI(), e);
             exception = wrapException(e, request);
         } finally {
             try {
                 client.close();
             } catch (Exception e) {
-                log.warn("Error closing http client instance", e);
+                LOGGER.warn("Error closing http client instance", e);
             }
         }
 
@@ -350,9 +331,7 @@ public class FlowableClientService {
         FlowableServiceException exception = null;
         CloseableHttpClient client = getHttpClient(userName, password);
         try {
-            CloseableHttpResponse response = client.execute(request);
-
-            try {
+            try (CloseableHttpResponse response = client.execute(request)) {
                 if (response.getStatusLine() != null && response.getStatusLine().getStatusCode() != HttpStatus.SC_UNAUTHORIZED) {
                     httpResponse.setStatus(response.getStatusLine().getStatusCode());
                     if (response.getEntity() != null && response.getEntity().getContentType() != null) {
@@ -363,20 +342,17 @@ public class FlowableClientService {
                     exception = new FlowableServiceException(extractError(readJsonContent(response.getEntity().getContent()), "An error occurred while calling Flowable: " + response.getStatusLine()));
                 }
             } catch (Exception e) {
-                log.warn("Error consuming response from uri {}", request.getURI(), e);
+                LOGGER.warn("Error consuming response from uri {}", request.getURI(), e);
                 exception = wrapException(e, request);
-            } finally {
-                response.close();
             }
-
         } catch (Exception e) {
-            log.error("Error executing request to uri {}", request.getURI(), e);
+            LOGGER.error("Error executing request to uri {}", request.getURI(), e);
             exception = wrapException(e, request);
         } finally {
             try {
                 client.close();
             } catch (Exception e) {
-                log.warn("Error closing http client instance", e);
+                LOGGER.warn("Error closing http client instance", e);
             }
         }
 
@@ -407,7 +383,7 @@ public class FlowableClientService {
                         errorMessage = "An error was returned when calling the Flowable server";
                     }
                 } catch (Exception e) {
-                    log.warn("Error consuming response from uri {}", request.getURI(), e);
+                    LOGGER.warn("Error consuming response from uri {}", request.getURI(), e);
                     exception = wrapException(e, request);
 
                 } finally {
@@ -416,7 +392,7 @@ public class FlowableClientService {
                 exception = new FlowableServiceException(errorMessage);
             }
         } catch (Exception e) {
-            log.error("Error executing request to uri {}", request.getURI(), e);
+            LOGGER.error("Error executing request to uri {}", request.getURI(), e);
             exception = wrapException(e, request);
 
         } finally {
@@ -424,7 +400,7 @@ public class FlowableClientService {
                 client.close();
             } catch (Exception e) {
                 // No need to throw upwards, as this may hide exceptions/valid result
-                log.warn("Error closing http client instance", e);
+                LOGGER.warn("Error closing http client instance", e);
             }
         }
 
@@ -471,7 +447,7 @@ public class FlowableClientService {
                         errorMessage = "An error was returned when calling the Flowable server";
                     }
                 } catch (Exception e) {
-                    log.warn("Error consuming response from uri {}", request.getURI(), e);
+                    LOGGER.warn("Error consuming response from uri {}", request.getURI(), e);
                     exception = wrapException(e, request);
                 } finally {
                     response.close();
@@ -479,7 +455,7 @@ public class FlowableClientService {
                 exception = new FlowableServiceException(errorMessage);
             }
         } catch (Exception e) {
-            log.error("Error executing request to uri {}", request.getURI(), e);
+            LOGGER.error("Error executing request to uri {}", request.getURI(), e);
             exception = wrapException(e, request);
 
         } finally {
@@ -487,7 +463,7 @@ public class FlowableClientService {
                 client.close();
             } catch (Exception e) {
                 // No need to throw upwards, as this may hide exceptions/valid result
-                log.warn("Error closing http client instance", e);
+                LOGGER.warn("Error closing http client instance", e);
             }
         }
 
@@ -545,7 +521,7 @@ public class FlowableClientService {
         try {
             return new StringEntity(json.toString());
         } catch (Exception e) {
-            log.warn("Error translation json to http client entity {}", json, e);
+            LOGGER.warn("Error translation json to http client entity {}", json, e);
         }
         return null;
     }
@@ -554,7 +530,7 @@ public class FlowableClientService {
         try {
             return new StringEntity(json);
         } catch (Exception e) {
-            log.warn("Error translation json to http client entity {}", json, e);
+            LOGGER.warn("Error translation json to http client entity {}", json, e);
         }
         return null;
     }
@@ -648,7 +624,7 @@ public class FlowableClientService {
         try {
             return objectMapper.readTree(IOUtils.toString(requestContent));
         } catch (Exception e) {
-            log.debug("Error parsing error message", e);
+            LOGGER.debug("Error parsing error message", e);
         }
         return null;
     }

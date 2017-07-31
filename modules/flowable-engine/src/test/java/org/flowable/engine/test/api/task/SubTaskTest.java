@@ -19,6 +19,7 @@ import java.util.Set;
 
 import org.flowable.engine.history.HistoricTaskInstance;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -51,13 +52,13 @@ public class SubTaskTest extends PluggableFlowableTestCase {
         assertTrue(historyService.createHistoricTaskInstanceQuery().taskParentTaskId(subTaskId).list().isEmpty());
 
         List<Task> subTasks = taskService.getSubTasks(gonzoTaskId);
-        Set<String> subTaskNames = new HashSet<String>();
+        Set<String> subTaskNames = new HashSet<>();
         for (Task subTask : subTasks) {
             subTaskNames.add(subTask.getName());
         }
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
-            Set<String> expectedSubTaskNames = new HashSet<String>();
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
+            Set<String> expectedSubTaskNames = new HashSet<>();
             expectedSubTaskNames.add("subtask one");
             expectedSubTaskNames.add("subtask two");
 
@@ -65,7 +66,7 @@ public class SubTaskTest extends PluggableFlowableTestCase {
 
             List<HistoricTaskInstance> historicSubTasks = historyService.createHistoricTaskInstanceQuery().taskParentTaskId(gonzoTaskId).list();
 
-            subTaskNames = new HashSet<String>();
+            subTaskNames = new HashSet<>();
             for (HistoricTaskInstance historicSubTask : historicSubTasks) {
                 subTaskNames.add(historicSubTask.getName());
             }
@@ -105,11 +106,13 @@ public class SubTaskTest extends PluggableFlowableTestCase {
         tasks = taskService.createTaskQuery().taskAssignee("test").list();
         assertEquals(0, tasks.size());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             List<HistoricTaskInstance> historicTasks = historyService.createHistoricTaskInstanceQuery().taskAssignee("test").list();
             assertEquals(3, historicTasks.size());
 
             historyService.deleteHistoricProcessInstance(processInstance.getId());
+            
+            waitForHistoryJobExecutorToProcessAllJobs(5000, 100);
 
             historicTasks = historyService.createHistoricTaskInstanceQuery().taskAssignee("test").list();
             assertEquals(0, historicTasks.size());

@@ -17,10 +17,11 @@ import java.io.Serializable;
 import org.flowable.engine.JobNotFoundException;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
+import org.flowable.engine.common.impl.interceptor.Command;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.compatibility.Flowable5CompatibilityHandler;
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.jobexecutor.FailedJobListener;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.util.Flowable5Util;
 import org.flowable.engine.runtime.Job;
 import org.slf4j.Logger;
@@ -34,7 +35,7 @@ public class ExecuteJobCmd implements Command<Object>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static Logger log = LoggerFactory.getLogger(ExecuteJobCmd.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExecuteJobCmd.class);
 
     protected String jobId;
 
@@ -48,14 +49,14 @@ public class ExecuteJobCmd implements Command<Object>, Serializable {
             throw new FlowableIllegalArgumentException("jobId and job is null");
         }
 
-        Job job = commandContext.getJobEntityManager().findById(jobId);
+        Job job = CommandContextUtil.getJobEntityManager(commandContext).findById(jobId);
 
         if (job == null) {
             throw new JobNotFoundException(jobId);
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Executing job {}", job.getId());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Executing job {}", job.getId());
         }
 
         if (job.getProcessDefinitionId() != null && Flowable5Util.isFlowable5ProcessDefinitionId(commandContext, job.getProcessDefinitionId())) {
@@ -64,10 +65,10 @@ public class ExecuteJobCmd implements Command<Object>, Serializable {
             return null;
         }
 
-        commandContext.addCloseListener(new FailedJobListener(commandContext.getProcessEngineConfiguration().getCommandExecutor(), job));
+        commandContext.addCloseListener(new FailedJobListener(CommandContextUtil.getProcessEngineConfiguration(commandContext).getCommandExecutor(), job));
 
         try {
-            commandContext.getJobManager().execute(job);
+            CommandContextUtil.getJobManager(commandContext).execute(job);
         } catch (Throwable exception) {
             // Finally, Throw the exception to indicate the ExecuteJobCmd failed
             throw new FlowableException("Job " + jobId + " failed", exception);

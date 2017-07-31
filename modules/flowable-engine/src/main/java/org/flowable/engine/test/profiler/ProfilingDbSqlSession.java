@@ -16,11 +16,11 @@ import java.sql.Connection;
 import java.util.Collection;
 import java.util.List;
 
+import org.flowable.engine.common.impl.db.BulkDeleteOperation;
+import org.flowable.engine.common.impl.db.DbSqlSession;
+import org.flowable.engine.common.impl.db.DbSqlSessionFactory;
+import org.flowable.engine.common.impl.persistence.cache.EntityCache;
 import org.flowable.engine.common.impl.persistence.entity.Entity;
-import org.flowable.engine.impl.db.BulkDeleteOperation;
-import org.flowable.engine.impl.db.DbSqlSession;
-import org.flowable.engine.impl.db.DbSqlSessionFactory;
-import org.flowable.engine.impl.persistence.cache.EntityCache;
 
 /**
  * @author Joram Barrez
@@ -83,19 +83,19 @@ public class ProfilingDbSqlSession extends DbSqlSession {
     // SELECT LIST
 
     @Override
-    public List selectListWithRawParameter(String statement, Object parameter, int firstResult, int maxResults, boolean useCache) {
+    public List selectListWithRawParameter(String statement, Object parameter, boolean useCache) {
         if (getCurrentCommandExecution() != null) {
             getCurrentCommandExecution().addDbSelect(statement);
         }
-        return super.selectListWithRawParameter(statement, parameter, firstResult, maxResults, useCache);
+        return super.selectListWithRawParameter(statement, parameter, useCache);
     }
 
     @Override
-    public List selectListWithRawParameterWithoutFilter(String statement, Object parameter, int firstResult, int maxResults) {
+    public List selectListWithRawParameterNoCacheCheck(String statement, Object parameter) {
         if (getCurrentCommandExecution() != null) {
             getCurrentCommandExecution().addDbSelect(statement);
         }
-        return super.selectListWithRawParameterWithoutFilter(statement, parameter, firstResult, maxResults);
+        return super.selectListWithRawParameterNoCacheCheck(statement, parameter);
     }
 
     // INSERTS

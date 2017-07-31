@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.flowable.app.model.runtime.CompleteFormRepresentation;
 import org.flowable.app.model.runtime.ProcessInstanceVariableRepresentation;
+import org.flowable.app.model.runtime.SaveFormRepresentation;
 import org.flowable.app.service.runtime.FlowableTaskFormService;
 import org.flowable.form.model.FormModel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,12 @@ public class TaskFormResource {
     @RequestMapping(value = "/{taskId}", method = RequestMethod.POST, produces = "application/json")
     public void completeTaskForm(@PathVariable String taskId, @RequestBody CompleteFormRepresentation completeTaskFormRepresentation) {
         taskFormService.completeTaskForm(taskId, completeTaskFormRepresentation);
+    }
+
+    @ResponseStatus(value = HttpStatus.OK)
+    @RequestMapping(value = "/{taskId}/save-form", method = RequestMethod.POST, produces = "application/json")
+    public void saveTaskForm(@PathVariable String taskId, @RequestBody SaveFormRepresentation saveFormRepresentation) {
+        taskFormService.saveTaskForm(taskId, saveFormRepresentation);
     }
 
     @RequestMapping(value = "/{taskId}/variables", method = RequestMethod.GET, produces = "application/json")

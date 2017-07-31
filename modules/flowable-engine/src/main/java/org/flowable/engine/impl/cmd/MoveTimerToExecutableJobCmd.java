@@ -16,10 +16,11 @@ import java.io.Serializable;
 
 import org.flowable.engine.JobNotFoundException;
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.Command;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.persistence.entity.JobEntity;
 import org.flowable.engine.impl.persistence.entity.TimerJobEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +31,7 @@ public class MoveTimerToExecutableJobCmd implements Command<JobEntity>, Serializ
 
     private static final long serialVersionUID = 1L;
 
-    private static Logger log = LoggerFactory.getLogger(MoveTimerToExecutableJobCmd.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MoveTimerToExecutableJobCmd.class);
 
     protected String jobId;
 
@@ -44,17 +45,17 @@ public class MoveTimerToExecutableJobCmd implements Command<JobEntity>, Serializ
             throw new FlowableIllegalArgumentException("jobId and job is null");
         }
 
-        TimerJobEntity timerJob = commandContext.getTimerJobEntityManager().findById(jobId);
+        TimerJobEntity timerJob = CommandContextUtil.getTimerJobEntityManager(commandContext).findById(jobId);
 
         if (timerJob == null) {
             throw new JobNotFoundException(jobId);
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Executing timer job {}", timerJob.getId());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Executing timer job {}", timerJob.getId());
         }
 
-        return commandContext.getJobManager().moveTimerJobToExecutableJob(timerJob);
+        return CommandContextUtil.getJobManager(commandContext).moveTimerJobToExecutableJob(timerJob);
     }
 
     public String getJobId() {

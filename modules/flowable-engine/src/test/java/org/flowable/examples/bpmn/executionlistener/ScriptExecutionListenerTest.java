@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.flowable.engine.history.HistoricVariableInstance;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.test.Deployment;
@@ -31,9 +32,9 @@ public class ScriptExecutionListenerTest extends PluggableFlowableTestCase {
     public void testScriptExecutionListener() {
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("scriptExecutionListenerProcess");
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             List<HistoricVariableInstance> historicVariables = historyService.createHistoricVariableInstanceQuery().processInstanceId(processInstance.getId()).list();
-            Map<String, Object> varMap = new HashMap<String, Object>();
+            Map<String, Object> varMap = new HashMap<>();
             for (HistoricVariableInstance historicVariableInstance : historicVariables) {
                 varMap.put(historicVariableInstance.getVariableName(), historicVariableInstance.getValue());
             }

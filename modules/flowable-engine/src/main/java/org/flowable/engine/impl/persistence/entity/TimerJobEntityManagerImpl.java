@@ -26,10 +26,10 @@ import org.flowable.engine.impl.TimerJobQueryImpl;
 import org.flowable.engine.impl.calendar.BusinessCalendar;
 import org.flowable.engine.impl.calendar.CycleBusinessCalendar;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
-import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.jobexecutor.TimerEventHandler;
 import org.flowable.engine.impl.persistence.CountingExecutionEntity;
 import org.flowable.engine.impl.persistence.entity.data.TimerJobDataManager;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.runtime.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TimerJobEntityManagerImpl extends AbstractEntityManager<TimerJobEntity> implements TimerJobEntityManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(TimerJobEntityManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TimerJobEntityManagerImpl.class);
 
     protected TimerJobDataManager jobDataManager;
 
@@ -96,8 +96,8 @@ public class TimerJobEntityManagerImpl extends AbstractEntityManager<TimerJobEnt
     }
 
     @Override
-    public List<Job> findJobsByQueryCriteria(TimerJobQueryImpl jobQuery, Page page) {
-        return jobDataManager.findJobsByQueryCriteria(jobQuery, page);
+    public List<Job> findJobsByQueryCriteria(TimerJobQueryImpl jobQuery) {
+        return jobDataManager.findJobsByQueryCriteria(jobQuery);
     }
 
     @Override
@@ -149,7 +149,8 @@ public class TimerJobEntityManagerImpl extends AbstractEntityManager<TimerJobEnt
                 return false;
             }
         }
-
+        
+        jobEntity.setCreateTime(getProcessEngineConfiguration().getClock().getCurrentTime());
         super.insert(jobEntity, fireCreateEvent);
         return true;
     }
@@ -253,7 +254,7 @@ public class TimerJobEntityManagerImpl extends AbstractEntityManager<TimerJobEnt
     protected String getBusinessCalendarName(String calendarName, VariableScope variableScope) {
         String businessCalendarName = CycleBusinessCalendar.NAME;
         if (StringUtils.isNotEmpty(calendarName)) {
-            businessCalendarName = (String) Context.getProcessEngineConfiguration().getExpressionManager()
+            businessCalendarName = (String) CommandContextUtil.getProcessEngineConfiguration().getExpressionManager()
                     .createExpression(calendarName).getValue(variableScope);
         }
         return businessCalendarName;

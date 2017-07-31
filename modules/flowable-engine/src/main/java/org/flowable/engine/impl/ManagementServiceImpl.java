@@ -22,11 +22,17 @@ import org.flowable.engine.common.api.FlowableIllegalArgumentException;
 import org.flowable.engine.common.api.management.TableMetaData;
 import org.flowable.engine.common.api.management.TablePageQuery;
 import org.flowable.engine.common.impl.cmd.CustomSqlExecution;
+import org.flowable.engine.common.impl.db.DbSqlSession;
+import org.flowable.engine.common.impl.db.DbSqlSessionFactory;
+import org.flowable.engine.common.impl.interceptor.Command;
 import org.flowable.engine.common.impl.interceptor.CommandConfig;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.event.EventLogEntry;
 import org.flowable.engine.impl.cmd.DeleteDeadLetterJobCmd;
 import org.flowable.engine.impl.cmd.DeleteEventLogEntry;
+import org.flowable.engine.impl.cmd.DeleteHistoryJobCmd;
 import org.flowable.engine.impl.cmd.DeleteJobCmd;
+import org.flowable.engine.impl.cmd.DeleteSuspendedJobCmd;
 import org.flowable.engine.impl.cmd.DeleteTimerJobCmd;
 import org.flowable.engine.impl.cmd.ExecuteCustomSqlCmd;
 import org.flowable.engine.impl.cmd.ExecuteJobCmd;
@@ -43,11 +49,9 @@ import org.flowable.engine.impl.cmd.MoveTimerToExecutableJobCmd;
 import org.flowable.engine.impl.cmd.RescheduleTimerJobCmd;
 import org.flowable.engine.impl.cmd.SetJobRetriesCmd;
 import org.flowable.engine.impl.cmd.SetTimerJobRetriesCmd;
-import org.flowable.engine.impl.db.DbSqlSession;
-import org.flowable.engine.impl.db.DbSqlSessionFactory;
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.runtime.DeadLetterJobQuery;
+import org.flowable.engine.runtime.HistoryJobQuery;
 import org.flowable.engine.runtime.Job;
 import org.flowable.engine.runtime.JobQuery;
 import org.flowable.engine.runtime.SuspendedJobQuery;
@@ -110,9 +114,17 @@ public class ManagementServiceImpl extends ServiceImpl implements ManagementServ
     public void deleteTimerJob(String jobId) {
         commandExecutor.execute(new DeleteTimerJobCmd(jobId));
     }
+    
+    public void deleteSuspendedJob(String jobId) {
+        commandExecutor.execute(new DeleteSuspendedJobCmd(jobId));
+    }
 
     public void deleteDeadLetterJob(String jobId) {
         commandExecutor.execute(new DeleteDeadLetterJobCmd(jobId));
+    }
+    
+    public void deleteHistoryJob(String jobId) {
+        commandExecutor.execute(new DeleteHistoryJobCmd(jobId));
     }
 
     public void setJobRetries(String jobId, int retries) {
@@ -162,6 +174,10 @@ public class ManagementServiceImpl extends ServiceImpl implements ManagementServ
     public DeadLetterJobQuery createDeadLetterJobQuery() {
         return new DeadLetterJobQueryImpl(commandExecutor);
     }
+    
+    public HistoryJobQuery createHistoryJobQuery() {
+        return new HistoryJobQueryImpl(commandExecutor);
+    }
 
     public String getJobExceptionStacktrace(String jobId) {
         return commandExecutor.execute(new GetJobExceptionStacktraceCmd(jobId, JobType.ASYNC));
@@ -188,9 +204,9 @@ public class ManagementServiceImpl extends ServiceImpl implements ManagementServ
         return commandExecutor.execute(config, new Command<String>() {
             public String execute(CommandContext commandContext) {
                 DbSqlSessionFactory dbSqlSessionFactory = (DbSqlSessionFactory) commandContext.getSessionFactories().get(DbSqlSession.class);
-                DbSqlSession dbSqlSession = new DbSqlSession(dbSqlSessionFactory, commandContext.getEntityCache(), connection, catalog, schema);
+                DbSqlSession dbSqlSession = new DbSqlSession(dbSqlSessionFactory, CommandContextUtil.getEntityCache(commandContext), connection, catalog, schema);
                 commandContext.getSessions().put(DbSqlSession.class, dbSqlSession);
-                return dbSqlSession.dbSchemaUpdate();
+                return CommandContextUtil.getProcessEngineConfiguration(commandContext).getDbSchemaManager().dbSchemaUpdate();
             }
         });
     }
@@ -215,7 +231,7 @@ public class ManagementServiceImpl extends ServiceImpl implements ManagementServ
     @Override
     public <MapperType, ResultType> ResultType executeCustomSql(CustomSqlExecution<MapperType, ResultType> customSqlExecution) {
         Class<MapperType> mapperClass = customSqlExecution.getMapperClass();
-        return commandExecutor.execute(new ExecuteCustomSqlCmd<MapperType, ResultType>(mapperClass, customSqlExecution));
+        return commandExecutor.execute(new ExecuteCustomSqlCmd<>(mapperClass, customSqlExecution));
     }
 
     @Override

@@ -19,15 +19,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.db.BulkDeleteable;
+import org.flowable.engine.common.impl.context.Context;
 
 /**
  * @author Tom Baeyens
  * @author Christian Stettler
  * @author Joram Barrez
  */
-public class HistoricProcessInstanceEntityImpl extends HistoricScopeInstanceEntityImpl implements HistoricProcessInstanceEntity, BulkDeleteable {
+public class HistoricProcessInstanceEntityImpl extends HistoricScopeInstanceEntityImpl implements HistoricProcessInstanceEntity {
 
     private static final long serialVersionUID = 1L;
 
@@ -61,9 +60,9 @@ public class HistoricProcessInstanceEntityImpl extends HistoricScopeInstanceEnti
         processDefinitionName = processInstance.getProcessDefinitionName();
         processDefinitionVersion = processInstance.getProcessDefinitionVersion();
         deploymentId = processInstance.getDeploymentId();
+        startActivityId = processInstance.getStartActivityId();
         startTime = processInstance.getStartTime();
         startUserId = processInstance.getStartUserId();
-        startActivityId = processInstance.getActivityId();
         superProcessInstanceId = processInstance.getSuperExecution() != null ? processInstance.getSuperExecution().getProcessInstanceId() : null;
 
         // Inherit tenant id (if applicable)
@@ -73,13 +72,14 @@ public class HistoricProcessInstanceEntityImpl extends HistoricScopeInstanceEnti
     }
 
     public Object getPersistentState() {
-        Map<String, Object> persistentState = new HashMap<String, Object>();
+        Map<String, Object> persistentState = new HashMap<>();
+        persistentState.put("startTime", startTime);
         persistentState.put("endTime", endTime);
         persistentState.put("businessKey", businessKey);
         persistentState.put("name", name);
         persistentState.put("durationInMillis", durationInMillis);
         persistentState.put("deleteReason", deleteReason);
-        persistentState.put("endStateName", endActivityId);
+        persistentState.put("endActivityId", endActivityId);
         persistentState.put("superProcessInstanceId", superProcessInstanceId);
         persistentState.put("processDefinitionId", processDefinitionId);
         persistentState.put("processDefinitionKey", processDefinitionKey);
@@ -212,7 +212,7 @@ public class HistoricProcessInstanceEntityImpl extends HistoricScopeInstanceEnti
     }
 
     public Map<String, Object> getProcessVariables() {
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         if (queryVariables != null) {
             for (HistoricVariableInstanceEntity variableInstance : queryVariables) {
                 if (variableInstance.getId() != null && variableInstance.getTaskId() == null) {

@@ -26,6 +26,7 @@ import javax.sql.DataSource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
+import org.flowable.content.api.ContentEngineConfigurationApi;
 import org.flowable.content.api.ContentManagementService;
 import org.flowable.content.api.ContentService;
 import org.flowable.content.api.ContentStorage;
@@ -33,21 +34,11 @@ import org.flowable.content.engine.impl.ContentEngineImpl;
 import org.flowable.content.engine.impl.ContentManagementServiceImpl;
 import org.flowable.content.engine.impl.ContentServiceImpl;
 import org.flowable.content.engine.impl.ServiceImpl;
-import org.flowable.content.engine.impl.cfg.CommandExecutorImpl;
 import org.flowable.content.engine.impl.cfg.StandaloneContentEngineConfiguration;
 import org.flowable.content.engine.impl.cfg.StandaloneInMemContentEngineConfiguration;
-import org.flowable.content.engine.impl.cfg.TransactionListener;
-import org.flowable.content.engine.impl.cfg.standalone.StandaloneMybatisTransactionContextFactory;
-import org.flowable.content.engine.impl.db.DbSqlSessionFactory;
+import org.flowable.content.engine.impl.db.ContentDbSchemaManager;
+import org.flowable.content.engine.impl.db.EntityDependencyOrder;
 import org.flowable.content.engine.impl.fs.SimpleFileSystemContentStorage;
-import org.flowable.content.engine.impl.interceptor.CommandContext;
-import org.flowable.content.engine.impl.interceptor.CommandContextFactory;
-import org.flowable.content.engine.impl.interceptor.CommandContextInterceptor;
-import org.flowable.content.engine.impl.interceptor.CommandExecutor;
-import org.flowable.content.engine.impl.interceptor.CommandInterceptor;
-import org.flowable.content.engine.impl.interceptor.CommandInvoker;
-import org.flowable.content.engine.impl.interceptor.LogInterceptor;
-import org.flowable.content.engine.impl.interceptor.TransactionContextInterceptor;
 import org.flowable.content.engine.impl.persistence.entity.ContentItemEntityManager;
 import org.flowable.content.engine.impl.persistence.entity.ContentItemEntityManagerImpl;
 import org.flowable.content.engine.impl.persistence.entity.TableDataManager;
@@ -57,9 +48,20 @@ import org.flowable.content.engine.impl.persistence.entity.data.impl.MybatisCont
 import org.flowable.engine.common.AbstractEngineConfiguration;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.impl.cfg.BeansConfigurationHelper;
-import org.flowable.engine.common.impl.cfg.TransactionContextFactory;
-import org.flowable.engine.common.impl.interceptor.CommandConfig;
+import org.flowable.engine.common.impl.cfg.standalone.StandaloneMybatisTransactionContextFactory;
+import org.flowable.engine.common.impl.db.DbSqlSessionFactory;
+import org.flowable.engine.common.impl.interceptor.CommandContextFactory;
+import org.flowable.engine.common.impl.interceptor.CommandContextInterceptor;
+import org.flowable.engine.common.impl.interceptor.CommandInterceptor;
+import org.flowable.engine.common.impl.interceptor.DefaultCommandInvoker;
+import org.flowable.engine.common.impl.interceptor.EngineConfigurationConstants;
+import org.flowable.engine.common.impl.interceptor.LogInterceptor;
 import org.flowable.engine.common.impl.interceptor.SessionFactory;
+import org.flowable.engine.common.impl.interceptor.TransactionContextInterceptor;
+import org.flowable.engine.common.impl.persistence.GenericManagerFactory;
+import org.flowable.engine.common.impl.persistence.cache.EntityCache;
+import org.flowable.engine.common.impl.persistence.cache.EntityCacheImpl;
+import org.flowable.engine.common.impl.persistence.entity.Entity;
 import org.flowable.engine.common.runtime.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,30 +73,15 @@ import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 
-public class ContentEngineConfiguration extends AbstractEngineConfiguration {
+public class ContentEngineConfiguration extends AbstractEngineConfiguration implements ContentEngineConfigurationApi {
 
-    protected static final Logger logger = LoggerFactory.getLogger(ContentEngineConfiguration.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(ContentEngineConfiguration.class);
 
     public static final String DEFAULT_MYBATIS_MAPPING_FILE = "org/flowable/content/db/mapping/mappings.xml";
 
     public static final String LIQUIBASE_CHANGELOG_PREFIX = "ACT_CO_";
 
     protected String contentEngineName = ContentEngines.NAME_DEFAULT;
-
-    // COMMAND EXECUTORS ///////////////////////////////////////////////
-
-    protected CommandInterceptor commandInvoker;
-
-    /**
-     * the configurable list which will be {@link #initInterceptorChain(java.util.List) processed} to build the {@link #commandExecutor}
-     */
-    protected List<CommandInterceptor> customPreCommandInterceptors;
-    protected List<CommandInterceptor> customPostCommandInterceptors;
-
-    protected List<CommandInterceptor> commandInterceptors;
-
-    /** this will be initialized during the configurationComplete() */
-    protected CommandExecutor commandExecutor;
 
     // SERVICES
     // /////////////////////////////////////////////////////////////////
@@ -115,12 +102,6 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
     // ENTITY MANAGERS /////////////////////////////////////////////////
     protected ContentItemEntityManager contentItemEntityManager;
     protected TableDataManager tableDataManager;
-
-    protected CommandContextFactory commandContextFactory;
-    protected TransactionContextFactory<TransactionListener, CommandContext> transactionContextFactory;
-
-    // SESSION FACTORIES ///////////////////////////////////////////////
-    protected DbSqlSessionFactory dbSqlSessionFactory;
 
     public static ContentEngineConfiguration createContentEngineConfigurationFromResourceDefault() {
         return createContentEngineConfigurationFromResource("flowable.content.cfg.xml", "contentEngineConfiguration");
@@ -169,12 +150,17 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
 
         if (usingRelationalDatabase) {
             initDataSource();
+            initDbSchemaManager();
             initDbSchema();
         }
 
         initBeans();
         initTransactionFactory();
-        initSqlSessionFactory();
+        
+        if (usingRelationalDatabase) {
+            initSqlSessionFactory();
+        }
+        
         initSessionFactories();
         initServices();
         initDataManagers();
@@ -227,7 +213,7 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
             }
 
             if (contentRootFile != null && contentRootFile.exists()) {
-                logger.info("Content file system root : {}", contentRootFile.getAbsolutePath());
+                LOGGER.info("Content file system root : {}", contentRootFile.getAbsolutePath());
             }
 
             contentStorage = new SimpleFileSystemContentStorage(contentRootFile);
@@ -235,6 +221,12 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
     }
 
     // data model ///////////////////////////////////////////////////////////////
+    
+    public void initDbSchemaManager() {
+        if (this.dbSchemaManager == null) {
+            this.dbSchemaManager = new ContentDbSchemaManager();
+        }
+    }
 
     public void initDbSchema() {
         try {
@@ -256,14 +248,14 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
             Liquibase liquibase = new Liquibase("org/flowable/content/db/liquibase/flowable-content-db-changelog.xml", new ClassLoaderResourceAccessor(), database);
 
             if (DB_SCHEMA_UPDATE_DROP_CREATE.equals(databaseSchemaUpdate)) {
-                logger.debug("Dropping and creating schema CONTENT");
+                LOGGER.debug("Dropping and creating schema CONTENT");
                 liquibase.dropAll();
                 liquibase.update("content");
             } else if (DB_SCHEMA_UPDATE_TRUE.equals(databaseSchemaUpdate)) {
-                logger.debug("Updating schema CONTENT");
+                LOGGER.debug("Updating schema CONTENT");
                 liquibase.update("content");
             } else if (DB_SCHEMA_UPDATE_FALSE.equals(databaseSchemaUpdate)) {
-                logger.debug("Validating schema CONTENT");
+                LOGGER.debug("Validating schema CONTENT");
                 liquibase.validate();
             }
         } catch (Exception e) {
@@ -275,11 +267,15 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
 
     public void initSessionFactories() {
         if (sessionFactories == null) {
-            sessionFactories = new HashMap<Class<?>, SessionFactory>();
+            sessionFactories = new HashMap<>();
 
             if (usingRelationalDatabase) {
                 initDbSqlSessionFactory();
             }
+            
+            addSessionFactory(new GenericManagerFactory(EntityCache.class, EntityCacheImpl.class));
+            
+            commandContextFactory.setSessionFactories(sessionFactories);
         }
 
         if (customSessionFactories != null) {
@@ -292,19 +288,30 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
     public void initDbSqlSessionFactory() {
         if (dbSqlSessionFactory == null) {
             dbSqlSessionFactory = createDbSqlSessionFactory();
+            dbSqlSessionFactory.setDatabaseType(databaseType);
+            dbSqlSessionFactory.setSqlSessionFactory(sqlSessionFactory);
+            dbSqlSessionFactory.setIdGenerator(idGenerator);
+            dbSqlSessionFactory.setDatabaseTablePrefix(databaseTablePrefix);
+            dbSqlSessionFactory.setTablePrefixIsSchema(tablePrefixIsSchema);
+            dbSqlSessionFactory.setDatabaseCatalog(databaseCatalog);
+            dbSqlSessionFactory.setDatabaseSchema(databaseSchema);
+            addSessionFactory(dbSqlSessionFactory);
         }
-        dbSqlSessionFactory.setDatabaseType(databaseType);
-        dbSqlSessionFactory.setSqlSessionFactory(sqlSessionFactory);
-        dbSqlSessionFactory.setIdGenerator(idGenerator);
-        dbSqlSessionFactory.setDatabaseTablePrefix(databaseTablePrefix);
-        dbSqlSessionFactory.setTablePrefixIsSchema(tablePrefixIsSchema);
-        dbSqlSessionFactory.setDatabaseCatalog(databaseCatalog);
-        dbSqlSessionFactory.setDatabaseSchema(databaseSchema);
-        addSessionFactory(dbSqlSessionFactory);
+        initDbSqlSessionFactoryEntitySettings();
     }
 
     public DbSqlSessionFactory createDbSqlSessionFactory() {
         return new DbSqlSessionFactory();
+    }
+    
+    protected void initDbSqlSessionFactoryEntitySettings() {
+        for (Class<? extends Entity> clazz : EntityDependencyOrder.INSERT_ORDER) {
+            dbSqlSessionFactory.getInsertionOrder().add(clazz);
+        }
+        
+        for (Class<? extends Entity> clazz : EntityDependencyOrder.DELETE_ORDER) {
+            dbSqlSessionFactory.getDeletionOrder().add(clazz);
+        }
     }
 
     // command executors
@@ -320,13 +327,13 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
 
     public void initCommandInvoker() {
         if (commandInvoker == null) {
-            commandInvoker = new CommandInvoker();
+            commandInvoker = new DefaultCommandInvoker();
         }
     }
 
     public void initCommandInterceptors() {
         if (commandInterceptors == null) {
-            commandInterceptors = new ArrayList<CommandInterceptor>();
+            commandInterceptors = new ArrayList<>();
             if (customPreCommandInterceptors != null) {
                 commandInterceptors.addAll(customPreCommandInterceptors);
             }
@@ -339,42 +346,34 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
     }
 
     public Collection<? extends CommandInterceptor> getDefaultCommandInterceptors() {
-        List<CommandInterceptor> interceptors = new ArrayList<CommandInterceptor>();
-        interceptors.add(new LogInterceptor());
-
-        interceptors.add(new CommandContextInterceptor(commandContextFactory, this));
-
-        CommandInterceptor transactionInterceptor = createTransactionInterceptor();
-        if (transactionInterceptor != null) {
-            interceptors.add(transactionInterceptor);
+        if (defaultCommandInterceptors == null) {
+            List<CommandInterceptor> interceptors = new ArrayList<>();
+            interceptors.add(new LogInterceptor());
+            
+            CommandInterceptor transactionInterceptor = createTransactionInterceptor();
+            if (transactionInterceptor != null) {
+                interceptors.add(transactionInterceptor);
+            }
+            
+            if (commandContextFactory != null) {
+                CommandContextInterceptor commandContextInterceptor = new CommandContextInterceptor(commandContextFactory);
+                engineConfigurations.put(EngineConfigurationConstants.KEY_CONTENT_ENGINE_CONFIG, this);
+                commandContextInterceptor.setEngineConfigurations(engineConfigurations);
+                commandContextInterceptor.setCurrentEngineConfigurationKey(EngineConfigurationConstants.KEY_CONTENT_ENGINE_CONFIG);
+                interceptors.add(commandContextInterceptor);
+            }
+           
+            if (transactionContextFactory != null) {
+                interceptors.add(new TransactionContextInterceptor(transactionContextFactory));
+            }
+            
+            defaultCommandInterceptors = interceptors;
         }
-
-        return interceptors;
-    }
-
-    public void initCommandExecutor() {
-        if (commandExecutor == null) {
-            CommandInterceptor first = initInterceptorChain(commandInterceptors);
-            commandExecutor = new CommandExecutorImpl(getDefaultCommandConfig(), first);
-        }
-    }
-
-    public CommandInterceptor initInterceptorChain(List<CommandInterceptor> chain) {
-        if (chain == null || chain.isEmpty()) {
-            throw new FlowableException("invalid command interceptor chain configuration: " + chain);
-        }
-        for (int i = 0; i < chain.size() - 1; i++) {
-            chain.get(i).setNext(chain.get(i + 1));
-        }
-        return chain.get(0);
+        return defaultCommandInterceptors;
     }
 
     public CommandInterceptor createTransactionInterceptor() {
-        if (transactionContextFactory != null) {
-            return new TransactionContextInterceptor(transactionContextFactory);
-        } else {
-            return null;
-        }
+        return null;
     }
 
     // OTHER
@@ -384,7 +383,6 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
         if (commandContextFactory == null) {
             commandContextFactory = new CommandContextFactory();
         }
-        commandContextFactory.setDmnEngineConfiguration(this);
     }
 
     public void initTransactionContextFactory() {
@@ -395,11 +393,6 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
 
     // myBatis SqlSessionFactory
     // ////////////////////////////////////////////////
-
-    @Override
-    public String pathToEngineDbProperties() {
-        return "org/flowable/content/db/properties/" + databaseType + ".properties";
-    }
 
     @Override
     public InputStream getMyBatisXmlConfigurationStream() {
@@ -509,63 +502,6 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
         return this;
     }
 
-    @Override
-    public ContentEngineConfiguration setXmlEncoding(String xmlEncoding) {
-        this.xmlEncoding = xmlEncoding;
-        return this;
-    }
-
-    @Override
-    public ContentEngineConfiguration setDefaultCommandConfig(CommandConfig defaultCommandConfig) {
-        this.defaultCommandConfig = defaultCommandConfig;
-        return this;
-    }
-
-    public CommandInterceptor getCommandInvoker() {
-        return commandInvoker;
-    }
-
-    public ContentEngineConfiguration setCommandInvoker(CommandInterceptor commandInvoker) {
-        this.commandInvoker = commandInvoker;
-        return this;
-    }
-
-    public List<CommandInterceptor> getCustomPreCommandInterceptors() {
-        return customPreCommandInterceptors;
-    }
-
-    public ContentEngineConfiguration setCustomPreCommandInterceptors(List<CommandInterceptor> customPreCommandInterceptors) {
-        this.customPreCommandInterceptors = customPreCommandInterceptors;
-        return this;
-    }
-
-    public List<CommandInterceptor> getCustomPostCommandInterceptors() {
-        return customPostCommandInterceptors;
-    }
-
-    public ContentEngineConfiguration setCustomPostCommandInterceptors(List<CommandInterceptor> customPostCommandInterceptors) {
-        this.customPostCommandInterceptors = customPostCommandInterceptors;
-        return this;
-    }
-
-    public List<CommandInterceptor> getCommandInterceptors() {
-        return commandInterceptors;
-    }
-
-    public ContentEngineConfiguration setCommandInterceptors(List<CommandInterceptor> commandInterceptors) {
-        this.commandInterceptors = commandInterceptors;
-        return this;
-    }
-
-    public CommandExecutor getCommandExecutor() {
-        return commandExecutor;
-    }
-
-    public ContentEngineConfiguration setCommandExecutor(CommandExecutor commandExecutor) {
-        this.commandExecutor = commandExecutor;
-        return this;
-    }
-
     public ContentManagementService getContentManagementService() {
         return contentManagementService;
     }
@@ -642,15 +578,6 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
         return this;
     }
 
-    public CommandContextFactory getCommandContextFactory() {
-        return commandContextFactory;
-    }
-
-    public ContentEngineConfiguration setCommandContextFactory(CommandContextFactory commandContextFactory) {
-        this.commandContextFactory = commandContextFactory;
-        return this;
-    }
-
     @Override
     public ContentEngineConfiguration setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
         this.sqlSessionFactory = sqlSessionFactory;
@@ -678,15 +605,6 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
     @Override
     public ContentEngineConfiguration setCustomSessionFactories(List<SessionFactory> customSessionFactories) {
         this.customSessionFactories = customSessionFactories;
-        return this;
-    }
-
-    public DbSqlSessionFactory getDbSqlSessionFactory() {
-        return dbSqlSessionFactory;
-    }
-
-    public ContentEngineConfiguration setDbSqlSessionFactory(DbSqlSessionFactory dbSqlSessionFactory) {
-        this.dbSqlSessionFactory = dbSqlSessionFactory;
         return this;
     }
 
@@ -723,17 +641,6 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration {
     @Override
     public ContentEngineConfiguration setSessionFactories(Map<Class<?>, SessionFactory> sessionFactories) {
         this.sessionFactories = sessionFactories;
-        return this;
-    }
-
-    public TransactionContextFactory<TransactionListener, CommandContext> getTransactionContextFactory() {
-        return transactionContextFactory;
-    }
-
-    public ContentEngineConfiguration setTransactionContextFactory(
-            TransactionContextFactory<TransactionListener, CommandContext> transactionContextFactory) {
-
-        this.transactionContextFactory = transactionContextFactory;
         return this;
     }
 

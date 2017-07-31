@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.BaseElement;
 import org.flowable.bpmn.model.FieldExtension;
 import org.flowable.bpmn.model.FlowElement;
+import org.flowable.bpmn.model.HttpServiceTask;
 import org.flowable.bpmn.model.ImplementationType;
 import org.flowable.bpmn.model.ServiceTask;
 import org.flowable.editor.language.json.model.ModelInfo;
@@ -44,6 +45,7 @@ public class ServiceTaskJsonConverter extends BaseBpmnJsonConverter implements D
 
     public static void fillBpmnTypes(Map<Class<? extends BaseElement>, Class<? extends BaseBpmnJsonConverter>> convertersToJsonMap) {
         convertersToJsonMap.put(ServiceTask.class, ServiceTaskJsonConverter.class);
+        convertersToJsonMap.put(HttpServiceTask.class, ServiceTaskJsonConverter.class);
     }
 
     protected String getStencilId(BaseElement baseElement) {
@@ -86,6 +88,20 @@ public class ServiceTaskJsonConverter extends BaseBpmnJsonConverter implements D
                     decisionReferenceNode.put("key", modelInfo.getKey());
                 }
             }
+
+        } else if ("http".equalsIgnoreCase(serviceTask.getType())) {
+            setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_METHOD, "requestMethod", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_URL, "requestUrl", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_HEADERS, "requestHeaders", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_BODY, "requestBody", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_TIMEOUT, "requestTimeout", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_DISALLOW_REDIRECTS, "disallowRedirects", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_FAIL_STATUS_CODES, "failStatusCodes", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_HANDLE_STATUS_CODES, "handleStatusCodes", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_IGNORE_EXCEPTION, "ignoreException", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_SAVE_REQUEST_VARIABLES, "saveRequestVariables", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_SAVE_RESPONSE_PARAMETERS, "saveResponseParameters", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_RESULT_VARIABLE_PREFIX, "resultVariablePrefix", serviceTask, propertiesNode);
 
         } else {
 

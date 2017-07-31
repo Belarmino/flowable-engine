@@ -1,9 +1,10 @@
 package flowable;
 
 import org.flowable.engine.ManagementService;
+import org.flowable.engine.common.impl.interceptor.Command;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.cmd.AbstractCustomSqlExecution;
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -19,7 +20,7 @@ import flowable.mappers.CustomMybatisMapper;
 @SpringBootApplication
 public class Application {
 
-    private static final Logger logger = LoggerFactory.getLogger(Application.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
     @Bean
     CommandLineRunner customMybatisMapper(final ManagementService managementService) {
@@ -33,7 +34,7 @@ public class Application {
                     }
                 });
 
-                logger.info("Process definition id = {}", processDefinitionId);
+                LOGGER.info("Process definition id = {}", processDefinitionId);
             }
         };
     }
@@ -46,13 +47,12 @@ public class Application {
                 String processDefinitionDeploymentId = managementService.executeCommand(new Command<String>() {
                     @Override
                     public String execute(CommandContext commandContext) {
-                        return (String) commandContext
-                                .getDbSqlSession()
+                        return (String) CommandContextUtil.getDbSqlSession()
                                 .selectOne("selectProcessDefinitionDeploymentIdByKey", "waiter");
                     }
                 });
 
-                logger.info("Process definition deployment id = {}", processDefinitionDeploymentId);
+                LOGGER.info("Process definition deployment id = {}", processDefinitionDeploymentId);
             }
         };
     }

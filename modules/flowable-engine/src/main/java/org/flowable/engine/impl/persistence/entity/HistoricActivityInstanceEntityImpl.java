@@ -42,12 +42,14 @@ public class HistoricActivityInstanceEntityImpl extends HistoricScopeInstanceEnt
     }
 
     public Object getPersistentState() {
-        Map<String, Object> persistentState = new HashMap<String, Object>();
+        Map<String, Object> persistentState = new HashMap<>();
         persistentState.put("endTime", endTime);
         persistentState.put("durationInMillis", durationInMillis);
         persistentState.put("deleteReason", deleteReason);
         persistentState.put("executionId", executionId);
+        persistentState.put("taskId", taskId);
         persistentState.put("assignee", assignee);
+        persistentState.put("calledProcessInstanceId", calledProcessInstanceId);
         return persistentState;
     }
 
@@ -125,7 +127,7 @@ public class HistoricActivityInstanceEntityImpl extends HistoricScopeInstanceEnt
 
     @Override
     public String toString() {
-        return "HistoricActivityInstanceEntity[id=" + id + ", activityId=" + activityId + ", activityName=" + activityName + "]";
+        return "HistoricActivityInstanceEntity[id=" + id + ", activityId=" + activityId + ", activityName=" + activityName + ", executionId= " + executionId + "]";
     }
 
 }

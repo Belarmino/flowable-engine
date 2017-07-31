@@ -48,6 +48,7 @@ public interface StencilConstants {
     final String STENCIL_TASK_USER = "UserTask";
     final String STENCIL_TASK_CAMEL = "CamelTask";
     final String STENCIL_TASK_MULE = "MuleTask";
+    final String STENCIL_TASK_HTTP = "HttpTask";
     final String STENCIL_TASK_SHELL = "ShellTask";
     final String STENCIL_TASK_DECISION = "DecisionTask";
 
@@ -215,6 +216,9 @@ public interface StencilConstants {
     final String PROPERTY_CALLACTIVITY_CALLEDELEMENT = "callactivitycalledelement";
     final String PROPERTY_CALLACTIVITY_IN = "callactivityinparameters";
     final String PROPERTY_CALLACTIVITY_OUT = "callactivityoutparameters";
+    final String PROPERTY_CALLACTIVITY_INHERIT_VARIABLES = "callactivityinheritvariables";
+    final String PROPERTY_CALLACTIVITY_INHERIT_BUSINESS_KEY = "callactivityinheritbusinesskey";
+    final String PROPERTY_CALLACTIVITY_USE_LOCALSCOPE_FOR_OUTPARAMETERS = "callactivityuselocalscopeforoutparameters";
     final String PROPERTY_IOPARAMETER_SOURCE = "source";
     final String PROPERTY_IOPARAMETER_SOURCE_EXPRESSION = "sourceExpression";
     final String PROPERTY_IOPARAMETER_TARGET = "target";
@@ -248,4 +252,18 @@ public interface StencilConstants {
     final String PROPERTY_DECISIONTABLE_REFERENCE_ID = "decisiontablereferenceid";
     final String PROPERTY_DECISIONTABLE_REFERENCE_NAME = "decisiontablereferencename";
     final String PROPERTY_DECISIONTABLE_REFERENCE_KEY = "decisionTableReferenceKey";
+
+    final String PROPERTY_HTTPTASK_REQ_METHOD = "httptaskrequestmethod";
+    final String PROPERTY_HTTPTASK_REQ_URL = "httptaskrequesturl";
+    final String PROPERTY_HTTPTASK_REQ_HEADERS = "httptaskrequestheaders";
+    final String PROPERTY_HTTPTASK_REQ_BODY  = "httptaskrequestbody";
+    final String PROPERTY_HTTPTASK_REQ_TIMEOUT = "httptaskrequesttimeout";
+    final String PROPERTY_HTTPTASK_REQ_DISALLOW_REDIRECTS = "httptaskdisallowredirects";
+    final String PROPERTY_HTTPTASK_REQ_FAIL_STATUS_CODES = "httptaskfailstatuscodes";
+    final String PROPERTY_HTTPTASK_REQ_HANDLE_STATUS_CODES = "httptaskhandlestatuscodes";
+    final String PROPERTY_HTTPTASK_REQ_IGNORE_EXCEPTION = "httptaskignoreexception";
+    final String PROPERTY_HTTPTASK_RESPONSE_VARIABLE_NAME = "httptaskresponsevariablename";
+    final String PROPERTY_HTTPTASK_SAVE_REQUEST_VARIABLES = "httptasksaverequestvariables";
+    final String PROPERTY_HTTPTASK_SAVE_RESPONSE_PARAMETERS = "httptasksaveresponseparameters";
+    final String PROPERTY_HTTPTASK_RESULT_VARIABLE_PREFIX = "httptaskresultvariableprefix";
 }

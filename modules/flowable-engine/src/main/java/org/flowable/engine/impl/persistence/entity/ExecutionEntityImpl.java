@@ -20,15 +20,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.flowable.bpmn.model.FlowableListener;
 import org.flowable.bpmn.model.FlowElement;
+import org.flowable.bpmn.model.FlowableListener;
 import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.common.api.FlowableException;
+import org.flowable.engine.common.impl.context.Context;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.delegate.event.FlowableEngineEventType;
 import org.flowable.engine.delegate.event.impl.FlowableEventBuilder;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.interceptor.CommandContext;
+import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.persistence.CountingExecutionEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.util.ProcessDefinitionUtil;
 
 /**
@@ -105,6 +107,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected int suspensionState = SuspensionState.ACTIVE.getStateCode();
 
+    protected String startActivityId;
     protected String startUserId;
     protected Date startTime;
 
@@ -208,20 +211,20 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
      */
     public static ExecutionEntityImpl createWithEmptyRelationshipCollections() {
         ExecutionEntityImpl execution = new ExecutionEntityImpl();
-        execution.executions = new ArrayList<ExecutionEntityImpl>(1);
-        execution.tasks = new ArrayList<TaskEntity>(1);
-        execution.variableInstances = new HashMap<String, VariableInstanceEntity>(1);
-        execution.jobs = new ArrayList<JobEntity>(1);
-        execution.timerJobs = new ArrayList<TimerJobEntity>(1);
-        execution.eventSubscriptions = new ArrayList<EventSubscriptionEntity>(1);
-        execution.identityLinks = new ArrayList<IdentityLinkEntity>(1);
+        execution.executions = new ArrayList<>(1);
+        execution.tasks = new ArrayList<>(1);
+        execution.variableInstances = new HashMap<>(1);
+        execution.jobs = new ArrayList<>(1);
+        execution.timerJobs = new ArrayList<>(1);
+        execution.eventSubscriptions = new ArrayList<>(1);
+        execution.identityLinks = new ArrayList<>(1);
         return execution;
     }
 
     // persistent state /////////////////////////////////////////////////////////
 
     public Object getPersistentState() {
-        Map<String, Object> persistentState = new HashMap<String, Object>();
+        Map<String, Object> persistentState = new HashMap<>();
         persistentState.put("processDefinitionId", this.processDefinitionId);
         persistentState.put("businessKey", this.businessKey);
         persistentState.put("activityId", this.activityId);
@@ -234,12 +237,15 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
         persistentState.put("lockTime", lockTime);
         persistentState.put("superExecution", this.superExecutionId);
         persistentState.put("rootProcessInstanceId", this.rootProcessInstanceId);
+        persistentState.put("isMultiInstanceRoot", this.isMultiInstanceRoot);
         if (forcedUpdate) {
             persistentState.put("forcedUpdate", Boolean.TRUE);
         }
         persistentState.put("suspensionState", this.suspensionState);
+        persistentState.put("startActivityId", this.startActivityId);
         persistentState.put("startTime", this.startTime);
         persistentState.put("startUserId", this.startUserId);
+        persistentState.put("isCountEnabled", this.isCountEnabled);
         persistentState.put("eventSubscriptionCount", eventSubscriptionCount);
         persistentState.put("taskCount", taskCount);
         persistentState.put("jobCount", jobCount);
@@ -299,7 +305,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
     @SuppressWarnings({ "unchecked", "rawtypes" })
     protected void ensureExecutionsInitialized() {
         if (executions == null) {
-            this.executions = (List) Context.getCommandContext().getExecutionEntityManager().findChildExecutionsByParentExecutionId(id);
+            this.executions = (List) CommandContextUtil.getExecutionEntityManager().findChildExecutionsByParentExecutionId(id);
         }
     }
 
@@ -369,7 +375,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected void ensureProcessInstanceInitialized() {
         if ((processInstance == null) && (processInstanceId != null)) {
-            processInstance = (ExecutionEntityImpl) Context.getCommandContext().getExecutionEntityManager().findById(processInstanceId);
+            processInstance = (ExecutionEntityImpl) CommandContextUtil.getExecutionEntityManager().findById(processInstanceId);
         }
     }
 
@@ -394,7 +400,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected void ensureParentInitialized() {
         if (parent == null && parentId != null) {
-            parent = (ExecutionEntityImpl) Context.getCommandContext().getExecutionEntityManager().findById(parentId);
+            parent = (ExecutionEntityImpl) CommandContextUtil.getExecutionEntityManager().findById(parentId);
         }
     }
 
@@ -434,7 +440,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected void ensureSuperExecutionInitialized() {
         if (superExecution == null && superExecutionId != null) {
-            superExecution = (ExecutionEntityImpl) Context.getCommandContext().getExecutionEntityManager().findById(superExecutionId);
+            superExecution = (ExecutionEntityImpl) CommandContextUtil.getExecutionEntityManager().findById(superExecutionId);
         }
     }
 
@@ -449,7 +455,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected void ensureSubProcessInstanceInitialized() {
         if (subProcessInstance == null) {
-            subProcessInstance = (ExecutionEntityImpl) Context.getCommandContext().getExecutionEntityManager().findSubProcessInstanceBySuperExecutionId(id);
+            subProcessInstance = (ExecutionEntityImpl) CommandContextUtil.getExecutionEntityManager().findSubProcessInstanceBySuperExecutionId(id);
         }
     }
 
@@ -460,7 +466,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected void ensureRootProcessInstanceInitialized() {
         if (rootProcessInstanceId == null) {
-            rootProcessInstance = (ExecutionEntityImpl) Context.getCommandContext().getExecutionEntityManager().findById(rootProcessInstanceId);
+            rootProcessInstance = (ExecutionEntityImpl) CommandContextUtil.getExecutionEntityManager().findById(rootProcessInstanceId);
         }
     }
 
@@ -511,7 +517,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     @Override
     protected Collection<VariableInstanceEntity> loadVariableInstances() {
-        return Context.getCommandContext().getVariableInstanceEntityManager().findVariableInstancesByExecutionId(id);
+        return CommandContextUtil.getVariableInstanceEntityManager().findVariableInstancesByExecutionId(id);
     }
 
     @Override
@@ -531,9 +537,9 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
         VariableInstanceEntity result = super.createVariableInstance(variableName, value, sourceActivityExecution);
 
         // Dispatch event, if needed
-        if (Context.getProcessEngineConfiguration() != null && Context.getProcessEngineConfiguration().getEventDispatcher().isEnabled()) {
-            Context
-                    .getProcessEngineConfiguration()
+        ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration();
+        if (processEngineConfiguration != null && processEngineConfiguration.getEventDispatcher().isEnabled()) {
+            processEngineConfiguration
                     .getEventDispatcher()
                     .dispatchEvent(
                             FlowableEventBuilder.createVariableEvent(FlowableEngineEventType.VARIABLE_CREATED, variableName, value, result.getType(), result.getTaskId(), result.getExecutionId(), getProcessInstanceId(),
@@ -547,9 +553,9 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
         super.updateVariableInstance(variableInstance, value, sourceActivityExecution);
 
         // Dispatch event, if needed
-        if (Context.getProcessEngineConfiguration() != null && Context.getProcessEngineConfiguration().getEventDispatcher().isEnabled()) {
-            Context
-                    .getProcessEngineConfiguration()
+        ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration();
+        if (processEngineConfiguration != null && processEngineConfiguration.getEventDispatcher().isEnabled()) {
+            processEngineConfiguration
                     .getEventDispatcher()
                     .dispatchEvent(
                             FlowableEventBuilder.createVariableEvent(FlowableEngineEventType.VARIABLE_UPDATED, variableInstance.getName(), value, variableInstance.getType(), variableInstance.getTaskId(),
@@ -564,7 +570,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
         if (commandContext == null) {
             throw new FlowableException("lazy loading outside command context");
         }
-        VariableInstanceEntity variableInstance = commandContext.getVariableInstanceEntityManager().findVariableInstanceByExecutionAndName(id, variableName);
+        VariableInstanceEntity variableInstance = CommandContextUtil.getVariableInstanceEntityManager(commandContext).findVariableInstanceByExecutionAndName(id, variableName);
 
         return variableInstance;
     }
@@ -575,7 +581,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
         if (commandContext == null) {
             throw new FlowableException("lazy loading outside command context");
         }
-        return commandContext.getVariableInstanceEntityManager().findVariableInstancesByExecutionAndNames(id, variableNames);
+        return CommandContextUtil.getVariableInstanceEntityManager(commandContext).findVariableInstancesByExecutionAndNames(id, variableNames);
     }
 
     // event subscription support //////////////////////////////////////////////
@@ -587,7 +593,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected void ensureEventSubscriptionsInitialized() {
         if (eventSubscriptions == null) {
-            eventSubscriptions = Context.getCommandContext().getEventSubscriptionEntityManager().findEventSubscriptionsByExecution(id);
+            eventSubscriptions = CommandContextUtil.getEventSubscriptionEntityManager().findEventSubscriptionsByExecution(id);
         }
     }
 
@@ -600,7 +606,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected void ensureJobsInitialized() {
         if (jobs == null) {
-            jobs = Context.getCommandContext().getJobEntityManager().findJobsByExecutionId(id);
+            jobs = CommandContextUtil.getJobEntityManager().findJobsByExecutionId(id);
         }
     }
 
@@ -611,7 +617,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected void ensureTimerJobsInitialized() {
         if (timerJobs == null) {
-            timerJobs = Context.getCommandContext().getTimerJobEntityManager().findJobsByExecutionId(id);
+            timerJobs = CommandContextUtil.getTimerJobEntityManager().findJobsByExecutionId(id);
         }
     }
 
@@ -619,7 +625,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected void ensureTasksInitialized() {
         if (tasks == null) {
-            tasks = Context.getCommandContext().getTaskEntityManager().findTasksByExecutionId(id);
+            tasks = CommandContextUtil.getTaskEntityManager().findTasksByExecutionId(id);
         }
     }
 
@@ -637,7 +643,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     protected void ensureIdentityLinksInitialized() {
         if (identityLinks == null) {
-            identityLinks = Context.getCommandContext().getIdentityLinkEntityManager().findIdentityLinksByProcessInstanceId(id);
+            identityLinks = CommandContextUtil.getIdentityLinkEntityManager().findIdentityLinksByProcessInstanceId(id);
         }
     }
 
@@ -809,7 +815,7 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
     }
 
     public Map<String, Object> getProcessVariables() {
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         if (queryVariables != null) {
             for (VariableInstanceEntity variableInstance : queryVariables) {
                 if (variableInstance.getId() != null && variableInstance.getTaskId() == null) {
@@ -841,6 +847,14 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
 
     public String getActivityName() {
         return activityName;
+    }
+
+    public String getStartActivityId() {
+        return startActivityId;
+    }
+
+    public void setStartActivityId(String startActivityId) {
+        this.startActivityId = startActivityId;
     }
 
     public String getStartUserId() {

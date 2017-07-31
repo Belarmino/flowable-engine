@@ -44,6 +44,7 @@ import org.flowable.bpmn.model.FlowElementsContainer;
 import org.flowable.bpmn.model.FlowNode;
 import org.flowable.bpmn.model.Gateway;
 import org.flowable.bpmn.model.GraphicInfo;
+import org.flowable.bpmn.model.HttpServiceTask;
 import org.flowable.bpmn.model.InclusiveGateway;
 import org.flowable.bpmn.model.IntermediateCatchEvent;
 import org.flowable.bpmn.model.Lane;
@@ -76,8 +77,8 @@ import org.flowable.image.ProcessDiagramGenerator;
  */
 public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
 
-    protected Map<Class<? extends BaseElement>, ActivityDrawInstruction> activityDrawInstructions = new HashMap<Class<? extends BaseElement>, ActivityDrawInstruction>();
-    protected Map<Class<? extends BaseElement>, ArtifactDrawInstruction> artifactDrawInstructions = new HashMap<Class<? extends BaseElement>, ArtifactDrawInstruction>();
+    protected Map<Class<? extends BaseElement>, ActivityDrawInstruction> activityDrawInstructions = new HashMap<>();
+    protected Map<Class<? extends BaseElement>, ArtifactDrawInstruction> artifactDrawInstructions = new HashMap<>();
 
     public DefaultProcessDiagramGenerator() {
         this(1.0);
@@ -205,9 +206,20 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
                     processDiagramCanvas.drawCamelTask(serviceTask.getName(), graphicInfo, scaleFactor);
                 } else if ("mule".equalsIgnoreCase(serviceTask.getType())) {
                     processDiagramCanvas.drawMuleTask(serviceTask.getName(), graphicInfo, scaleFactor);
+                } else if ("http".equalsIgnoreCase(serviceTask.getType())) {
+                    processDiagramCanvas.drawHttpTask(serviceTask.getName(), graphicInfo, scaleFactor);
                 } else {
                     processDiagramCanvas.drawServiceTask(serviceTask.getName(), graphicInfo, scaleFactor);
                 }
+            }
+        });
+        
+        // http service task
+        activityDrawInstructions.put(HttpServiceTask.class, new ActivityDrawInstruction() {
+
+            public void draw(DefaultProcessDiagramCanvas processDiagramCanvas, BpmnModel bpmnModel, FlowNode flowNode) {
+                GraphicInfo graphicInfo = bpmnModel.getGraphicInfo(flowNode.getId());
+                processDiagramCanvas.drawHttpTask(flowNode.getName(), graphicInfo, scaleFactor);
             }
         });
 
@@ -544,7 +556,7 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
         // Need to make sure all elements have positive x and y.
         // Check all graphicInfo and update the elements accordingly
 
-        List<GraphicInfo> allGraphicInfos = new ArrayList<GraphicInfo>();
+        List<GraphicInfo> allGraphicInfos = new ArrayList<>();
         if (bpmnModel.getLocationMap() != null) {
             allGraphicInfos.addAll(bpmnModel.getLocationMap().values());
         }
@@ -952,7 +964,7 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
     }
 
     protected static List<Artifact> gatherAllArtifacts(BpmnModel bpmnModel) {
-        List<Artifact> artifacts = new ArrayList<Artifact>();
+        List<Artifact> artifacts = new ArrayList<>();
         for (Process process : bpmnModel.getProcesses()) {
             artifacts.addAll(process.getArtifacts());
         }
@@ -960,7 +972,7 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
     }
 
     protected static List<FlowNode> gatherAllFlowNodes(BpmnModel bpmnModel) {
-        List<FlowNode> flowNodes = new ArrayList<FlowNode>();
+        List<FlowNode> flowNodes = new ArrayList<>();
         for (Process process : bpmnModel.getProcesses()) {
             flowNodes.addAll(gatherAllFlowNodes(process));
         }
@@ -968,7 +980,7 @@ public class DefaultProcessDiagramGenerator implements ProcessDiagramGenerator {
     }
 
     protected static List<FlowNode> gatherAllFlowNodes(FlowElementsContainer flowElementsContainer) {
-        List<FlowNode> flowNodes = new ArrayList<FlowNode>();
+        List<FlowNode> flowNodes = new ArrayList<>();
         for (FlowElement flowElement : flowElementsContainer.getFlowElements()) {
             if (flowElement instanceof FlowNode) {
                 flowNodes.add((FlowNode) flowElement);

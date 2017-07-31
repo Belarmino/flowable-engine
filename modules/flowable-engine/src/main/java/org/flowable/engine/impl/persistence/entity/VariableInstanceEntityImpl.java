@@ -18,7 +18,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.engine.common.impl.persistence.entity.AbstractEntity;
-import org.flowable.engine.impl.db.BulkDeleteable;
 import org.flowable.engine.impl.variable.ValueFields;
 import org.flowable.engine.impl.variable.VariableType;
 
@@ -27,7 +26,7 @@ import org.flowable.engine.impl.variable.VariableType;
  * @author Marcus Klimstra (CGI)
  * @author Joram Barrez
  */
-public class VariableInstanceEntityImpl extends AbstractEntity implements VariableInstanceEntity, ValueFields, BulkDeleteable, Serializable {
+public class VariableInstanceEntityImpl extends AbstractEntity implements VariableInstanceEntity, ValueFields, Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -54,19 +53,16 @@ public class VariableInstanceEntityImpl extends AbstractEntity implements Variab
     }
 
     public Object getPersistentState() {
-        Map<String, Object> persistentState = new HashMap<String, Object>();
-        if (longValue != null) {
-            persistentState.put("longValue", longValue);
+        Map<String, Object> persistentState = new HashMap<>();
+        persistentState.put("name", name);
+        if (type != null) {
+            persistentState.put("typeName", type.getTypeName());
         }
-        if (doubleValue != null) {
-            persistentState.put("doubleValue", doubleValue);
-        }
-        if (textValue != null) {
-            persistentState.put("textValue", textValue);
-        }
-        if (textValue2 != null) {
-            persistentState.put("textValue2", textValue2);
-        }
+        persistentState.put("executionId", executionId);
+        persistentState.put("longValue", longValue);
+        persistentState.put("doubleValue", doubleValue);
+        persistentState.put("textValue", textValue);
+        persistentState.put("textValue2", textValue2);
         if (byteArrayRef != null && byteArrayRef.getId() != null) {
             persistentState.put("byteArrayValueId", byteArrayRef.getId());
         }

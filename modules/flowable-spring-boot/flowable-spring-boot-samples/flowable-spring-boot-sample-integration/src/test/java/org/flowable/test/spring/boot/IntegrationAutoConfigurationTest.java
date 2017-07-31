@@ -28,7 +28,6 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.support.GenericHandler;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * Test the Spring Integration inbound inboundGateway support.
@@ -72,7 +71,7 @@ public class IntegrationAutoConfigurationTest {
         }
 
         public static class AnalysingService {
-            private final AtomicReference<String> stringAtomicReference = new AtomicReference<String>();
+            private final AtomicReference<String> stringAtomicReference = new AtomicReference<>();
 
             public void dump(String projectId) {
                 this.stringAtomicReference.set(projectId);
@@ -109,7 +108,7 @@ public class IntegrationAutoConfigurationTest {
                 .list();
         ProcessDefinition processDefinition = processDefinitionList.iterator().next();
         Assert.assertEquals(integrationGatewayProcess, processDefinition.getKey());
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("customerId", 232);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(integrationGatewayProcess, vars);
         Assert.assertNotNull("the processInstance should not be null", processInstance);
@@ -122,11 +121,6 @@ public class IntegrationAutoConfigurationTest {
             DataSourceProcessEngineAutoConfiguration.DataSourceProcessEngineConfiguration.class,
             IntegrationAutoConfiguration.class })
     public static class BaseConfiguration {
-
-        @Bean
-        public RestTemplate restTemplate() {
-            return new RestTemplate();
-        }
 
         @Bean
         public TaskExecutor taskExecutor() {

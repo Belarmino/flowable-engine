@@ -13,8 +13,6 @@
 
 package org.activiti.engine.impl.cfg;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -233,12 +231,13 @@ import org.flowable.engine.impl.persistence.deploy.DeploymentCache;
 import org.flowable.engine.impl.persistence.deploy.ProcessDefinitionCacheEntry;
 import org.flowable.engine.impl.variable.VariableType;
 import org.flowable.engine.impl.variable.VariableTypes;
-import org.flowable.idm.api.IdmIdentityService;
 import org.flowable.image.impl.DefaultProcessDiagramGenerator;
 import org.flowable.validation.ProcessValidator;
 import org.flowable.validation.ProcessValidatorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Tom Baeyens
@@ -246,7 +245,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfiguration {
 
-    private static Logger log = LoggerFactory.getLogger(ProcessEngineConfigurationImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessEngineConfigurationImpl.class);
 
     public static final String DB_SCHEMA_UPDATE_CREATE = "create";
     public static final String DB_SCHEMA_UPDATE_DROP_CREATE = "drop-create";
@@ -267,8 +266,6 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
     protected DynamicBpmnService dynamicBpmnService = new DynamicBpmnServiceImpl(this);
 
     // IDM ENGINE SERVICES /////////////////////////////////////////////////////
-    protected boolean idmEngineInitialized;
-    protected IdmIdentityService idmIdentityService;
     protected FlowableEventDispatcher idmEventDispatcher;
 
     // COMMAND EXECUTORS ////////////////////////////////////////////////////////
@@ -716,7 +713,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
                     throw new ActivitiException("DataSource or JDBC properties have to be specified in a process engine configuration");
                 }
 
-                log.debug("initializing datasource to db: {}", jdbcUrl);
+                LOGGER.debug("initializing datasource to db: {}", jdbcUrl);
 
                 PooledDataSource pooledDataSource = new PooledDataSource(ReflectUtil.getClassLoader(), jdbcDriver, jdbcUrl, jdbcUsername, jdbcPassword);
 
@@ -805,22 +802,22 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
             connection = dataSource.getConnection();
             DatabaseMetaData databaseMetaData = connection.getMetaData();
             String databaseProductName = databaseMetaData.getDatabaseProductName();
-            log.debug("database product name: '{}'", databaseProductName);
+            LOGGER.debug("database product name: '{}'", databaseProductName);
             databaseType = databaseTypeMappings.getProperty(databaseProductName);
             if (databaseType == null) {
                 throw new ActivitiException("couldn't deduct database type from database product name '" + databaseProductName + "'");
             }
-            log.debug("using database type: {}", databaseType);
+            LOGGER.debug("using database type: {}", databaseType);
 
         } catch (SQLException e) {
-            log.error("Exception while initializing Database connection", e);
+            LOGGER.error("Exception while initializing Database connection", e);
         } finally {
             try {
                 if (connection != null) {
                     connection.close();
                 }
             } catch (SQLException e) {
-                log.error("Exception while closing the Database connection", e);
+                LOGGER.error("Exception while closing the Database connection", e);
             }
         }
     }
@@ -1024,7 +1021,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
             }
 
             if (nrOfServiceLoadedConfigurators > 0) {
-                log.info("Found {} auto-discoverable Process Engine Configurator{}", nrOfServiceLoadedConfigurators++, nrOfServiceLoadedConfigurators > 1 ? "s" : "");
+                LOGGER.info("Found {} auto-discoverable Process Engine Configurator{}", nrOfServiceLoadedConfigurators++, nrOfServiceLoadedConfigurators > 1 ? "s" : "");
             }
 
             if (!allConfigurators.isEmpty()) {
@@ -1046,9 +1043,9 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
                 });
 
                 // Execute the configurators
-                log.info("Found {} Process Engine Configurators in total:", allConfigurators.size());
+                LOGGER.info("Found {} Process Engine Configurators in total:", allConfigurators.size());
                 for (ProcessEngineConfigurator configurator : allConfigurators) {
-                    log.info("{} (priority:{})", configurator.getClass(), configurator.getPriority());
+                    LOGGER.info("{} (priority:{})", configurator.getClass(), configurator.getPriority());
                 }
 
             }
@@ -1058,14 +1055,14 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
 
     protected void configuratorsBeforeInit() {
         for (ProcessEngineConfigurator configurator : allConfigurators) {
-            log.info("Executing beforeInit() of {} (priority:{})", configurator.getClass(), configurator.getPriority());
+            LOGGER.info("Executing beforeInit() of {} (priority:{})", configurator.getClass(), configurator.getPriority());
             configurator.beforeInit(this);
         }
     }
 
     protected void configuratorsAfterInit() {
         for (ProcessEngineConfigurator configurator : allConfigurators) {
-            log.info("Executing configure() of {} (priority:{})", configurator.getClass(), configurator.getPriority());
+            LOGGER.info("Executing configure() of {} (priority:{})", configurator.getClass(), configurator.getPriority());
             configurator.configure(this);
         }
     }
@@ -1238,7 +1235,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
                     Class<?> handledType = defaultBpmnParseHandler.getHandledTypes().iterator().next();
                     if (customParseHandlerMap.containsKey(handledType)) {
                         BpmnParseHandler newBpmnParseHandler = customParseHandlerMap.get(handledType);
-                        log.info("Replacing default BpmnParseHandler {} with {}", defaultBpmnParseHandler.getClass().getName(), newBpmnParseHandler.getClass()
+                        LOGGER.info("Replacing default BpmnParseHandler {} with {}", defaultBpmnParseHandler.getClass().getName(), newBpmnParseHandler.getClass()
                                 .getName());
                         bpmnParserHandlers.set(i, newBpmnParseHandler);
                     }
@@ -1636,24 +1633,6 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
     }
 
     public ProcessEngineConfiguration getProcessEngineConfiguration() {
-        return this;
-    }
-
-    public boolean isIdmEngineInitialized() {
-        return idmEngineInitialized;
-    }
-
-    public ProcessEngineConfigurationImpl setIdmEngineInitialized(boolean idmEngineInitialized) {
-        this.idmEngineInitialized = idmEngineInitialized;
-        return this;
-    }
-
-    public IdmIdentityService getIdmIdentityService() {
-        return idmIdentityService;
-    }
-
-    public ProcessEngineConfigurationImpl setIdmIdentityService(IdmIdentityService idmIdentityService) {
-        this.idmIdentityService = idmIdentityService;
         return this;
     }
 

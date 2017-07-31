@@ -18,11 +18,10 @@ import java.util.Set;
 
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.Page;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.interceptor.CommandExecutor;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 import org.flowable.engine.impl.persistence.entity.SuspensionState;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.repository.ProcessDefinitionQuery;
 
@@ -283,7 +282,7 @@ public class ProcessDefinitionQueryImpl extends AbstractQuery<ProcessDefinitionQ
         if (authorizationUserId == null) {
             return null;
         }
-        return Context.getProcessEngineConfiguration().getCandidateManager().getGroupsForCandidateUser(authorizationUserId);
+        return CommandContextUtil.getProcessEngineConfiguration().getCandidateManager().getGroupsForCandidateUser(authorizationUserId);
     }
 
     // sorting ////////////////////////////////////////////
@@ -320,12 +319,12 @@ public class ProcessDefinitionQueryImpl extends AbstractQuery<ProcessDefinitionQ
 
     public long executeCount(CommandContext commandContext) {
         checkQueryOk();
-        return commandContext.getProcessDefinitionEntityManager().findProcessDefinitionCountByQueryCriteria(this);
+        return CommandContextUtil.getProcessDefinitionEntityManager(commandContext).findProcessDefinitionCountByQueryCriteria(this);
     }
 
-    public List<ProcessDefinition> executeList(CommandContext commandContext, Page page) {
+    public List<ProcessDefinition> executeList(CommandContext commandContext) {
         checkQueryOk();
-        return commandContext.getProcessDefinitionEntityManager().findProcessDefinitionsByQueryCriteria(this, page);
+        return CommandContextUtil.getProcessDefinitionEntityManager(commandContext).findProcessDefinitionsByQueryCriteria(this);
     }
 
     public void checkQueryOk() {

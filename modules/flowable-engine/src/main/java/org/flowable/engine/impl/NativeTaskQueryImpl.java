@@ -15,8 +15,9 @@ package org.flowable.engine.impl;
 import java.util.List;
 import java.util.Map;
 
-import org.flowable.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.interceptor.CommandExecutor;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.task.NativeTaskQuery;
 import org.flowable.engine.task.Task;
 
@@ -34,12 +35,12 @@ public class NativeTaskQueryImpl extends AbstractNativeQuery<NativeTaskQuery, Ta
 
     // results ////////////////////////////////////////////////////////////////
 
-    public List<Task> executeList(CommandContext commandContext, Map<String, Object> parameterMap, int firstResult, int maxResults) {
-        return commandContext.getTaskEntityManager().findTasksByNativeQuery(parameterMap, firstResult, maxResults);
+    public List<Task> executeList(CommandContext commandContext, Map<String, Object> parameterMap) {
+        return CommandContextUtil.getTaskEntityManager(commandContext).findTasksByNativeQuery(parameterMap);
     }
 
     public long executeCount(CommandContext commandContext, Map<String, Object> parameterMap) {
-        return commandContext.getTaskEntityManager().findTaskCountByNativeQuery(parameterMap);
+        return CommandContextUtil.getTaskEntityManager(commandContext).findTaskCountByNativeQuery(parameterMap);
     }
 
 }

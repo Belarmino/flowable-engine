@@ -15,7 +15,6 @@ package org.flowable.engine.impl.persistence.entity.data.impl;
 import java.util.HashMap;
 import java.util.List;
 
-import org.flowable.engine.common.impl.Page;
 import org.flowable.engine.impl.DeadLetterJobQueryImpl;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.persistence.CachedEntityMatcher;
@@ -49,9 +48,9 @@ public class MybatisDeadLetterJobDataManager extends AbstractDataManager<DeadLet
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<Job> findJobsByQueryCriteria(DeadLetterJobQueryImpl jobQuery, Page page) {
+    public List<Job> findJobsByQueryCriteria(DeadLetterJobQueryImpl jobQuery) {
         String query = "selectDeadLetterJobByQueryCriteria";
-        return getDbSqlSession().selectList(query, jobQuery, page);
+        return getDbSqlSession().selectList(query, jobQuery);
     }
 
     @Override
@@ -66,7 +65,7 @@ public class MybatisDeadLetterJobDataManager extends AbstractDataManager<DeadLet
 
     @Override
     public void updateJobTenantIdForDeployment(String deploymentId, String newTenantId) {
-        HashMap<String, Object> params = new HashMap<String, Object>();
+        HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
         getDbSqlSession().update("updateDeadLetterJobTenantIdForDeployment", params);

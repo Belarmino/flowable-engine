@@ -22,6 +22,7 @@ import org.flowable.bpmn.model.FlowNode;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.history.HistoricTaskInstance;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -103,7 +104,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
 
     @Deployment
     public void testSimpleCompletionCondition() {
-        Map<String, Object> variableMap = new HashMap<String, Object>();
+        Map<String, Object> variableMap = new HashMap<>();
         variableMap.put("completed", false);
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("simpleSubProcess", variableMap);
         Execution execution = runtimeService.createExecutionQuery().activityId("adhocSubProcess").singleResult();
@@ -129,7 +130,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
         subProcessTask = taskService.createTaskQuery().processInstanceId(pi.getId()).singleResult();
         assertEquals("Task2 in subprocess", subProcessTask.getName());
 
-        variableMap = new HashMap<String, Object>();
+        variableMap = new HashMap<>();
         variableMap.put("completed", true);
         taskService.complete(subProcessTask.getId(), variableMap);
 
@@ -138,7 +139,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
 
         taskService.complete(afterTask.getId());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
 
             List<HistoricTaskInstance> historicTasks = historyService.createHistoricTaskInstanceQuery()
                     .processInstanceId(pi.getId())
@@ -163,7 +164,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
 
     @Deployment
     public void testParallelAdhocSubProcess() {
-        Map<String, Object> variableMap = new HashMap<String, Object>();
+        Map<String, Object> variableMap = new HashMap<>();
         variableMap.put("completed", false);
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("simpleSubProcess", variableMap);
         Execution execution = runtimeService.createExecutionQuery().activityId("adhocSubProcess").singleResult();
@@ -180,7 +181,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(pi.getId()).list();
         assertEquals(2, tasks.size());
 
-        variableMap = new HashMap<String, Object>();
+        variableMap = new HashMap<>();
         variableMap.put("completed", true);
         taskService.complete(subProcessTask.getId(), variableMap);
 
@@ -194,7 +195,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
 
     @Deployment
     public void testSequentialAdhocSubProcess() {
-        Map<String, Object> variableMap = new HashMap<String, Object>();
+        Map<String, Object> variableMap = new HashMap<>();
         variableMap.put("completed", false);
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("simpleSubProcess", variableMap);
         Execution execution = runtimeService.createExecutionQuery().activityId("adhocSubProcess").singleResult();
@@ -222,7 +223,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
         subProcessTask = taskService.createTaskQuery().processInstanceId(pi.getId()).singleResult();
         assertEquals("Task2 in subprocess", subProcessTask.getName());
 
-        variableMap = new HashMap<String, Object>();
+        variableMap = new HashMap<>();
         variableMap.put("completed", true);
         taskService.complete(subProcessTask.getId(), variableMap);
 
@@ -236,7 +237,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
 
     @Deployment
     public void testFlowsInAdhocSubProcess() {
-        Map<String, Object> variableMap = new HashMap<String, Object>();
+        Map<String, Object> variableMap = new HashMap<>();
         variableMap.put("completed", false);
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("simpleSubProcess", variableMap);
         Execution execution = runtimeService.createExecutionQuery().activityId("adhocSubProcess").singleResult();
@@ -261,7 +262,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
         subProcessTask = taskService.createTaskQuery().processInstanceId(pi.getId()).singleResult();
         assertEquals("The next task", subProcessTask.getName());
 
-        variableMap = new HashMap<String, Object>();
+        variableMap = new HashMap<>();
         variableMap.put("completed", true);
         taskService.complete(subProcessTask.getId(), variableMap);
 
@@ -275,7 +276,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = "org/flowable/engine/test/bpmn/subprocess/adhoc/AdhocSubProcessTest.testFlowsInAdhocSubProcess.bpmn20.xml")
     public void testCompleteFlowBeforeEndInAdhocSubProcess() {
-        Map<String, Object> variableMap = new HashMap<String, Object>();
+        Map<String, Object> variableMap = new HashMap<>();
         variableMap.put("completed", false);
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("simpleSubProcess", variableMap);
         Execution execution = runtimeService.createExecutionQuery().activityId("adhocSubProcess").singleResult();
@@ -288,7 +289,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
         Task subProcessTask = taskService.createTaskQuery().processInstanceId(pi.getId()).singleResult();
         assertEquals("Task in subprocess", subProcessTask.getName());
 
-        variableMap = new HashMap<String, Object>();
+        variableMap = new HashMap<>();
         variableMap.put("completed", true);
         taskService.complete(subProcessTask.getId(), variableMap);
 
@@ -302,7 +303,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
 
     @Deployment
     public void testParallelFlowsInAdhocSubProcess() {
-        Map<String, Object> variableMap = new HashMap<String, Object>();
+        Map<String, Object> variableMap = new HashMap<>();
         variableMap.put("completed", false);
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("simpleSubProcess", variableMap);
         Execution execution = runtimeService.createExecutionQuery().activityId("adhocSubProcess").singleResult();
@@ -328,7 +329,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(pi.getId()).list();
         assertEquals(3, tasks.size());
 
-        variableMap = new HashMap<String, Object>();
+        variableMap = new HashMap<>();
         variableMap.put("completed", true);
         taskService.complete(subProcessTask.getId(), variableMap);
 
@@ -342,7 +343,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
 
     @Deployment
     public void testKeepRemainingInstancesAdhocSubProcess() {
-        Map<String, Object> variableMap = new HashMap<String, Object>();
+        Map<String, Object> variableMap = new HashMap<>();
         variableMap.put("completed", false);
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("simpleSubProcess", variableMap);
         Execution execution = runtimeService.createExecutionQuery().activityId("adhocSubProcess").singleResult();
@@ -359,7 +360,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(pi.getId()).list();
         assertEquals(2, tasks.size());
 
-        variableMap = new HashMap<String, Object>();
+        variableMap = new HashMap<>();
         variableMap.put("completed", true);
         taskService.complete(subProcessTask.getId(), variableMap);
 
@@ -380,7 +381,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
 
     @Deployment
     public void testParallelFlowsWithKeepRemainingInstancesAdhocSubProcess() {
-        Map<String, Object> variableMap = new HashMap<String, Object>();
+        Map<String, Object> variableMap = new HashMap<>();
         variableMap.put("completed", false);
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("simpleSubProcess", variableMap);
         Execution execution = runtimeService.createExecutionQuery().activityId("adhocSubProcess").singleResult();
@@ -406,7 +407,7 @@ public class AdhocSubProcessTest extends PluggableFlowableTestCase {
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(pi.getId()).list();
         assertEquals(3, tasks.size());
 
-        variableMap = new HashMap<String, Object>();
+        variableMap = new HashMap<>();
         variableMap.put("completed", true);
         taskService.complete(subProcessTask.getId(), variableMap);
 

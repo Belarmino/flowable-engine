@@ -97,6 +97,8 @@ public abstract class BaseBpmnJsonConverter implements EditorJsonConstants, Sten
                 stencilId = STENCIL_TASK_CAMEL;
             } else if ("mule".equalsIgnoreCase(serviceTask.getType())) {
                 stencilId = STENCIL_TASK_MULE;
+            } else if ("http".equalsIgnoreCase(serviceTask.getType())) {
+                stencilId = STENCIL_TASK_HTTP;
             } else if ("dmn".equalsIgnoreCase(serviceTask.getType())) {
                 stencilId = STENCIL_TASK_DECISION;
             } else {
@@ -105,7 +107,7 @@ public abstract class BaseBpmnJsonConverter implements EditorJsonConstants, Sten
         } else {
             stencilId = getStencilId(baseElement);
         }
-
+        
         flowElementNode = BpmnJsonConverterUtil.createChildShape(baseElement.getId(), stencilId, graphicInfo.getX() - subProcessX + graphicInfo.getWidth(),
                 graphicInfo.getY() - subProcessY + graphicInfo.getHeight(), graphicInfo.getX() - subProcessX, graphicInfo.getY() - subProcessY);
         shapesArrayNode.add(flowElementNode);
@@ -527,7 +529,7 @@ public abstract class BaseBpmnJsonConverter implements EditorJsonConstants, Sten
                         } else if ("enum".equalsIgnoreCase(formProperty.getType())) {
                             JsonNode enumValuesNode = formNode.get(PROPERTY_FORM_ENUM_VALUES);
                             if (enumValuesNode != null) {
-                                List<FormValue> formValueList = new ArrayList<FormValue>();
+                                List<FormValue> formValueList = new ArrayList<>();
                                 for (JsonNode enumNode : enumValuesNode) {
                                     if (enumNode.get(PROPERTY_FORM_ENUM_VALUES_ID) != null && !enumNode.get(PROPERTY_FORM_ENUM_VALUES_ID).isNull() && enumNode.get(PROPERTY_FORM_ENUM_VALUES_NAME) != null
                                             && !enumNode.get(PROPERTY_FORM_ENUM_VALUES_NAME).isNull()) {
@@ -628,7 +630,7 @@ public abstract class BaseBpmnJsonConverter implements EditorJsonConstants, Sten
     }
 
     protected List<String> getValueAsList(String name, JsonNode objectNode) {
-        List<String> resultList = new ArrayList<String>();
+        List<String> resultList = new ArrayList<>();
         JsonNode valuesNode = objectNode.get(name);
         if (valuesNode != null) {
             for (JsonNode valueNode : valuesNode) {

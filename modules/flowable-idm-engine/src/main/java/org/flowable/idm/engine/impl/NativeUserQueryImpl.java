@@ -15,10 +15,11 @@ package org.flowable.idm.engine.impl;
 import java.util.List;
 import java.util.Map;
 
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 import org.flowable.idm.api.NativeUserQuery;
 import org.flowable.idm.api.User;
-import org.flowable.idm.engine.impl.interceptor.CommandContext;
-import org.flowable.idm.engine.impl.interceptor.CommandExecutor;
+import org.flowable.idm.engine.impl.util.CommandContextUtil;
 
 public class NativeUserQueryImpl extends AbstractNativeQuery<NativeUserQuery, User> implements NativeUserQuery {
 
@@ -34,12 +35,12 @@ public class NativeUserQueryImpl extends AbstractNativeQuery<NativeUserQuery, Us
 
     // results ////////////////////////////////////////////////////////////////
 
-    public List<User> executeList(CommandContext commandContext, Map<String, Object> parameterMap, int firstResult, int maxResults) {
-        return commandContext.getUserEntityManager().findUsersByNativeQuery(parameterMap, firstResult, maxResults);
+    public List<User> executeList(CommandContext commandContext, Map<String, Object> parameterMap) {
+        return CommandContextUtil.getUserEntityManager(commandContext).findUsersByNativeQuery(parameterMap);
     }
 
     public long executeCount(CommandContext commandContext, Map<String, Object> parameterMap) {
-        return commandContext.getUserEntityManager().findUserCountByNativeQuery(parameterMap);
+        return CommandContextUtil.getUserEntityManager(commandContext).findUserCountByNativeQuery(parameterMap);
     }
 
 }

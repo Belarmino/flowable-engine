@@ -28,6 +28,7 @@ import org.flowable.bpmn.model.Message;
 import org.flowable.bpmn.model.SendTask;
 import org.flowable.bpmn.model.ServiceTask;
 import org.flowable.engine.common.api.FlowableException;
+import org.flowable.engine.common.impl.util.ReflectUtil;
 import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.Expression;
@@ -49,10 +50,9 @@ import org.flowable.engine.impl.bpmn.webservice.MessageImplicitDataOutputAssocia
 import org.flowable.engine.impl.bpmn.webservice.MessageInstance;
 import org.flowable.engine.impl.bpmn.webservice.Operation;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
-import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.el.ExpressionManager;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.util.ProcessDefinitionUtil;
-import org.flowable.engine.impl.util.ReflectUtil;
 import org.flowable.engine.impl.webservice.WSOperation;
 import org.flowable.engine.impl.webservice.WSService;
 
@@ -69,13 +69,13 @@ public class WebServiceActivityBehavior extends AbstractBpmnActivityBehavior {
 
     public static final String CURRENT_MESSAGE = "org.flowable.engine.impl.bpmn.CURRENT_MESSAGE";
 
-    protected Map<String, XMLImporter> xmlImporterMap = new HashMap<String, XMLImporter>();
-    protected Map<String, WSOperation> wsOperationMap = new HashMap<String, WSOperation>();
-    protected Map<String, StructureDefinition> structureDefinitionMap = new HashMap<String, StructureDefinition>();
-    protected Map<String, WSService> wsServiceMap = new HashMap<String, WSService>();
-    protected Map<String, Operation> operationMap = new HashMap<String, Operation>();
-    protected Map<String, ItemDefinition> itemDefinitionMap = new HashMap<String, ItemDefinition>();
-    protected Map<String, MessageDefinition> messageDefinitionMap = new HashMap<String, MessageDefinition>();
+    protected Map<String, XMLImporter> xmlImporterMap = new HashMap<>();
+    protected Map<String, WSOperation> wsOperationMap = new HashMap<>();
+    protected Map<String, StructureDefinition> structureDefinitionMap = new HashMap<>();
+    protected Map<String, WSService> wsServiceMap = new HashMap<>();
+    protected Map<String, Operation> operationMap = new HashMap<>();
+    protected Map<String, ItemDefinition> itemDefinitionMap = new HashMap<>();
+    protected Map<String, MessageDefinition> messageDefinitionMap = new HashMap<>();
 
     public WebServiceActivityBehavior() {
         itemDefinitionMap.put("http://www.w3.org/2001/XMLSchema:string", new ItemDefinition("http://www.w3.org/2001/XMLSchema:string", new ClassStructureDefinition(String.class)));
@@ -132,7 +132,7 @@ public class WebServiceActivityBehavior extends AbstractBpmnActivityBehavior {
 
             fillMessage(dataInputAssociations, execution);
 
-            ProcessEngineConfigurationImpl processEngineConfig = Context.getProcessEngineConfiguration();
+            ProcessEngineConfigurationImpl processEngineConfig = CommandContextUtil.getProcessEngineConfiguration();
             MessageInstance receivedMessage = operation.sendMessage(message,
                     processEngineConfig.getWsOverridenEndpointAddresses());
 
@@ -305,7 +305,7 @@ public class WebServiceActivityBehavior extends AbstractBpmnActivityBehavior {
             return new MessageImplicitDataInputAssociation(dataAssociationElement.getSourceRef(), dataAssociationElement.getTargetRef());
         } else {
             SimpleDataInputAssociation dataAssociation = new SimpleDataInputAssociation(dataAssociationElement.getSourceRef(), dataAssociationElement.getTargetRef());
-            ExpressionManager expressionManager = Context.getProcessEngineConfiguration().getExpressionManager();
+            ExpressionManager expressionManager = CommandContextUtil.getProcessEngineConfiguration().getExpressionManager();
 
             for (org.flowable.bpmn.model.Assignment assignmentElement : dataAssociationElement.getAssignments()) {
                 if (StringUtils.isNotEmpty(assignmentElement.getFrom()) && StringUtils.isNotEmpty(assignmentElement.getTo())) {
@@ -323,7 +323,7 @@ public class WebServiceActivityBehavior extends AbstractBpmnActivityBehavior {
         if (StringUtils.isNotEmpty(dataAssociationElement.getSourceRef())) {
             return new MessageImplicitDataOutputAssociation(dataAssociationElement.getTargetRef(), dataAssociationElement.getSourceRef());
         } else {
-            ExpressionManager expressionManager = Context.getProcessEngineConfiguration().getExpressionManager();
+            ExpressionManager expressionManager = CommandContextUtil.getProcessEngineConfiguration().getExpressionManager();
             Expression transformation = expressionManager.createExpression(dataAssociationElement.getTransformation());
             AbstractDataAssociation dataOutputAssociation = new TransformationDataOutputAssociation(null, dataAssociationElement.getTargetRef(), transformation);
             return dataOutputAssociation;

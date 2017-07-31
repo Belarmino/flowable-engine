@@ -15,14 +15,14 @@ package org.flowable.engine.test.bpmn.dynamic;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import java.util.ArrayList;
 
 import org.flowable.engine.DynamicBpmnConstants;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.test.Deployment;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Created by Pardo David on 7/12/2016.
@@ -36,7 +36,7 @@ public class DynamicCandidateGroupsTest extends PluggableFlowableTestCase implem
     @Deployment(resources = { "org/flowable/engine/test/bpmn/dynamic/dynamic-bpmn-test-process.bpmn20.xml" })
     public void testIsShouldBePossibleToChangeCandidateGroups() {
         ProcessInstance instance = runtimeService.startProcessInstanceByKey("dynamicServiceTest");
-        ArrayList<String> candidateGroups = new ArrayList<String>(2);
+        ArrayList<String> candidateGroups = new ArrayList<>(2);
         candidateGroups.add("HR");
         candidateGroups.add("SALES");
 
@@ -55,7 +55,7 @@ public class DynamicCandidateGroupsTest extends PluggableFlowableTestCase implem
     @Deployment(resources = { "org/flowable/engine/test/bpmn/dynamic/dynamic-bpmn-test-process.bpmn20.xml" })
     public void testIsShouldBePossibleToResetChangeCandidateGroups() {
         ProcessInstance instance = runtimeService.startProcessInstanceByKey("dynamicServiceTest");
-        ArrayList<String> candidateGroups = new ArrayList<String>(2);
+        ArrayList<String> candidateGroups = new ArrayList<>(2);
         candidateGroups.add("HR");
         candidateGroups.add("SALES");
 

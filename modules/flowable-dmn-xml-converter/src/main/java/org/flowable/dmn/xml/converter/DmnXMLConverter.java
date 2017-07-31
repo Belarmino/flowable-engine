@@ -34,6 +34,7 @@ import javax.xml.validation.Validator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.dmn.converter.util.DmnXMLUtil;
+import org.flowable.dmn.model.BuiltinAggregator;
 import org.flowable.dmn.model.Decision;
 import org.flowable.dmn.model.DecisionRule;
 import org.flowable.dmn.model.DecisionTable;
@@ -65,8 +66,8 @@ public class DmnXMLConverter implements DmnXMLConstants {
     protected static final String DMN_XSD = "org/flowable/impl/dmn/parser/dmn.xsd";
     protected static final String DEFAULT_ENCODING = "UTF-8";
 
-    protected static Map<String, BaseDmnXMLConverter> convertersToDmnMap = new HashMap<String, BaseDmnXMLConverter>();
-    protected static Map<Class<? extends DmnElement>, BaseDmnXMLConverter> convertersToXMLMap = new HashMap<Class<? extends DmnElement>, BaseDmnXMLConverter>();
+    protected static Map<String, BaseDmnXMLConverter> convertersToDmnMap = new HashMap<>();
+    protected static Map<Class<? extends DmnElement>, BaseDmnXMLConverter> convertersToXMLMap = new HashMap<>();
 
     protected ClassLoader classloader;
 
@@ -211,6 +212,10 @@ public class DmnXMLConverter implements DmnXMLConstants {
                         currentDecisionTable.setHitPolicy(HitPolicy.FIRST);
                     }
 
+                    if (xtr.getAttributeValue(null, ATTRIBUTE_AGGREGATION) != null) {
+                        currentDecisionTable.setAggregation(BuiltinAggregator.get(xtr.getAttributeValue(null, ATTRIBUTE_AGGREGATION)));
+                    }
+
                     model.getDecisions().get(model.getDecisions().size() - 1).setExpression(currentDecisionTable);
                     parentElement = currentDecisionTable;
                 } else if (ELEMENT_DESCRIPTION.equals(xtr.getLocalName())) {
@@ -302,7 +307,11 @@ public class DmnXMLConverter implements DmnXMLConstants {
                 xtw.writeAttribute(ATTRIBUTE_ID, decisionTable.getId());
 
                 if (decisionTable.getHitPolicy() != null) {
-                    xtw.writeAttribute(ATTRIBUTE_HIT_POLICY, decisionTable.getHitPolicy().toString());
+                    xtw.writeAttribute(ATTRIBUTE_HIT_POLICY, decisionTable.getHitPolicy().getValue());
+                }
+
+                if (decisionTable.getAggregation() != null) {
+                    xtw.writeAttribute(ATTRIBUTE_AGGREGATION, decisionTable.getAggregation().toString());
                 }
 
                 DmnXMLUtil.writeElementDescription(decisionTable, xtw);
@@ -337,6 +346,14 @@ public class DmnXMLConverter implements DmnXMLConstants {
                         xtw.writeEndElement();
                     }
 
+                    if (clause.getInputValues() != null && StringUtils.isNotEmpty(clause.getInputValues().getText())) {
+                        xtw.writeStartElement(ELEMENT_INPUT_VALUES);
+                        xtw.writeStartElement(ELEMENT_TEXT);
+                        xtw.writeCharacters(clause.getInputValues().getText());
+                        xtw.writeEndElement();
+                        xtw.writeEndElement();
+                    }
+
                     xtw.writeEndElement();
                 }
 
@@ -353,6 +370,14 @@ public class DmnXMLConverter implements DmnXMLConstants {
                     }
                     if (StringUtils.isNotEmpty(clause.getTypeRef())) {
                         xtw.writeAttribute(ATTRIBUTE_TYPE_REF, clause.getTypeRef());
+                    }
+
+                    if (clause.getOutputValues() != null && StringUtils.isNotEmpty(clause.getOutputValues().getText())) {
+                        xtw.writeStartElement(ELEMENT_OUTPUT_VALUES);
+                        xtw.writeStartElement(ELEMENT_TEXT);
+                        xtw.writeCharacters(clause.getOutputValues().getText());
+                        xtw.writeEndElement();
+                        xtw.writeEndElement();
                     }
 
                     DmnXMLUtil.writeElementDescription(clause, xtw);
@@ -375,7 +400,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
                         xtw.writeAttribute(ATTRIBUTE_ID, container.getInputEntry().getId());
 
                         xtw.writeStartElement(ELEMENT_TEXT);
-                        xtw.writeCharacters(container.getInputEntry().getText());
+                        xtw.writeCData(container.getInputEntry().getText());
                         xtw.writeEndElement();
 
                         xtw.writeEndElement();
@@ -386,7 +411,7 @@ public class DmnXMLConverter implements DmnXMLConstants {
                         xtw.writeAttribute(ATTRIBUTE_ID, container.getOutputEntry().getId());
 
                         xtw.writeStartElement(ELEMENT_TEXT);
-                        xtw.writeCharacters(container.getOutputEntry().getText());
+                        xtw.writeCData(container.getOutputEntry().getText());
                         xtw.writeEndElement();
 
                         xtw.writeEndElement();

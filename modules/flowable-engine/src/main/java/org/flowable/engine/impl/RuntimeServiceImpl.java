@@ -29,9 +29,11 @@ import org.flowable.engine.form.FormData;
 import org.flowable.engine.impl.cmd.ActivateProcessInstanceCmd;
 import org.flowable.engine.impl.cmd.AddEventListenerCommand;
 import org.flowable.engine.impl.cmd.AddIdentityLinkForProcessInstanceCmd;
+import org.flowable.engine.impl.cmd.AddMultiInstanceExecutionCmd;
 import org.flowable.engine.impl.cmd.ChangeActivityStateCmd;
 import org.flowable.engine.impl.cmd.CompleteAdhocSubProcessCmd;
 import org.flowable.engine.impl.cmd.DeleteIdentityLinkForProcessInstanceCmd;
+import org.flowable.engine.impl.cmd.DeleteMultiInstanceExecutionCmd;
 import org.flowable.engine.impl.cmd.DeleteProcessInstanceCmd;
 import org.flowable.engine.impl.cmd.DispatchEventCommand;
 import org.flowable.engine.impl.cmd.ExecuteActivityForAdhocSubProcessCmd;
@@ -238,7 +240,7 @@ public class RuntimeServiceImpl extends ServiceImpl implements RuntimeService {
         if (variableName == null) {
             throw new FlowableIllegalArgumentException("variableName is null");
         }
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put(variableName, value);
         commandExecutor.execute(new SetExecutionVariablesCmd(executionId, variables, false));
     }
@@ -247,7 +249,7 @@ public class RuntimeServiceImpl extends ServiceImpl implements RuntimeService {
         if (variableName == null) {
             throw new FlowableIllegalArgumentException("variableName is null");
         }
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put(variableName, value);
         commandExecutor.execute(new SetExecutionVariablesCmd(executionId, variables, true));
     }
@@ -261,13 +263,13 @@ public class RuntimeServiceImpl extends ServiceImpl implements RuntimeService {
     }
 
     public void removeVariable(String executionId, String variableName) {
-        Collection<String> variableNames = new ArrayList<String>(1);
+        Collection<String> variableNames = new ArrayList<>(1);
         variableNames.add(variableName);
         commandExecutor.execute(new RemoveExecutionVariablesCmd(executionId, variableNames, false));
     }
 
     public void removeVariableLocal(String executionId, String variableName) {
-        Collection<String> variableNames = new ArrayList<String>();
+        Collection<String> variableNames = new ArrayList<>();
         variableNames.add(variableName);
         commandExecutor.execute(new RemoveExecutionVariablesCmd(executionId, variableNames, true));
     }
@@ -557,7 +559,17 @@ public class RuntimeServiceImpl extends ServiceImpl implements RuntimeService {
     public ChangeActivityStateBuilder createChangeActivityStateBuilder() {
         return new ChangeActivityStateBuilderImpl(this);
     }
+    
+    @Override
+    public Execution addMultiInstanceExecution(String activityId, String parentExecutionId, Map<String, Object> executionVariables) {
+        return commandExecutor.execute(new AddMultiInstanceExecutionCmd(activityId, parentExecutionId, executionVariables));
+    }
 
+    @Override
+    public void deleteMultiInstanceExecution(String executionId, boolean executionIsCompleted) {
+        commandExecutor.execute(new DeleteMultiInstanceExecutionCmd(executionId, executionIsCompleted));
+    }
+    
     public ProcessInstance startProcessInstance(ProcessInstanceBuilderImpl processInstanceBuilder) {
         if (processInstanceBuilder.getProcessDefinitionId() != null || processInstanceBuilder.getProcessDefinitionKey() != null) {
             return commandExecutor.execute(new StartProcessInstanceCmd<ProcessInstance>(processInstanceBuilder));

@@ -13,7 +13,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.flowable.engine.impl.util.ReflectUtil;
+import org.flowable.engine.common.impl.util.ReflectUtil;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.rest.service.BaseSpringRestTestCase;
 import org.flowable.rest.service.HttpMultipartHelper;
@@ -211,9 +211,10 @@ public class DeploymentResourceTest extends BaseSpringRestTestCase {
 
         HttpGet httpGet = new HttpGet(SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_DEPLOYMENT, existingDeployment.getId()));
         CloseableHttpResponse response = executeRequest(httpGet, HttpStatus.SC_OK);
-        closeResponse(response);
 
         JsonNode responseNode = objectMapper.readTree(response.getEntity().getContent());
+        
+        closeResponse(response);
 
         String deploymentId = responseNode.get("id").textValue();
         String name = responseNode.get("name").textValue();

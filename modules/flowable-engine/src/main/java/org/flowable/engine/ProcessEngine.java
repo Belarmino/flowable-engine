@@ -12,12 +12,6 @@
  */
 package org.flowable.engine;
 
-import org.flowable.content.api.ContentService;
-import org.flowable.dmn.api.DmnRepositoryService;
-import org.flowable.dmn.api.DmnRuleService;
-import org.flowable.form.api.FormRepositoryService;
-import org.flowable.idm.api.IdmIdentityService;
-
 /**
  * Provides access to all the services that expose the BPM and workflow operations.
  * 
@@ -40,7 +34,7 @@ import org.flowable.idm.api.IdmIdentityService;
 public interface ProcessEngine {
 
     /** the version of the flowable library */
-    public static String VERSION = "6.0.1.0"; // Note the extra .x at the end. To cater for snapshot releases with different database changes
+    public static String VERSION = "6.2.0.0"; // Note the extra .x at the end. To cater for snapshot releases with different database changes
 
     /**
      * The name as specified in 'process-engine-name' in the flowable.cfg.xml configuration file. The default name for a process engine is 'default
@@ -66,16 +60,4 @@ public interface ProcessEngine {
     DynamicBpmnService getDynamicBpmnService();
 
     ProcessEngineConfiguration getProcessEngineConfiguration();
-
-    FormRepositoryService getFormEngineRepositoryService();
-
-    org.flowable.form.api.FormService getFormEngineFormService();
-
-    DmnRepositoryService getDmnRepositoryService();
-
-    DmnRuleService getDmnRuleService();
-
-    IdmIdentityService getIdmIdentityService();
-
-    ContentService getContentService();
 }

@@ -19,12 +19,11 @@ import java.util.Map;
 
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.impl.persistence.entity.AbstractEntityNoRevision;
-import org.flowable.engine.impl.db.BulkDeleteable;
 
 /**
  * @author Frederik Heremans
  */
-public class HistoricIdentityLinkEntityImpl extends AbstractEntityNoRevision implements HistoricIdentityLinkEntity, Serializable, BulkDeleteable {
+public class HistoricIdentityLinkEntityImpl extends AbstractEntityNoRevision implements HistoricIdentityLinkEntity, Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -40,7 +39,7 @@ public class HistoricIdentityLinkEntityImpl extends AbstractEntityNoRevision imp
     }
 
     public Object getPersistentState() {
-        Map<String, Object> persistentState = new HashMap<String, Object>();
+        Map<String, Object> persistentState = new HashMap<>();
         persistentState.put("id", this.id);
         persistentState.put("type", this.type);
 

@@ -113,6 +113,8 @@ public class TaskEventsTest extends PluggableFlowableTestCase {
         event = (FlowableEngineEntityEvent) listener.getEventsReceived().get(1);
         assertEquals(FlowableEngineEventType.ENTITY_DELETED, event.getType());
         assertExecutionDetails(event, processInstance);
+        
+        waitForHistoryJobExecutorToProcessAllJobs(5000, 100);
     }
 
     @Deployment(resources = { "org/flowable/engine/test/api/runtime/oneTaskProcess.bpmn20.xml" })
@@ -255,7 +257,7 @@ public class TaskEventsTest extends PluggableFlowableTestCase {
             Task task = taskService.createTaskQuery().singleResult();
 
             // Complete first task
-            Map<String, Object> taskParams = new HashMap<String, Object>();
+            Map<String, Object> taskParams = new HashMap<>();
             taskService.complete(task.getId(), taskParams, true);
 
             FlowableEntityEvent event = (FlowableEntityEvent) tlistener.getEventsReceived().get(0);

@@ -52,7 +52,7 @@ public class SpringJmsTest {
                 .addClasspathResource("org/flowable/test/spring/executor/jms/SpringJmsTest.testMessageQueueAsyncExecutor.bpmn20.xml")
                 .deploy();
 
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("input1", 123);
         vars.put("input2", 456);
         processEngine.getRuntimeService().startProcessInstanceByKey("AsyncProcess", vars);
@@ -67,7 +67,6 @@ public class SpringJmsTest {
         Assert.assertEquals(0L, processEngine.getRuntimeService().createProcessInstanceQuery().count());
 
         for (String activityName : Arrays.asList("A", "B", "C", "D", "E", "F", "After boundary", "The user task", "G", "G1", "G2", "G3", "H", "I", "J", "K", "L")) {
-            System.out.println(activityName + " flerp");
             Assert.assertNotNull(processEngine.getHistoryService().createHistoricActivityInstanceQuery().activityName(activityName).singleResult());
         }
 

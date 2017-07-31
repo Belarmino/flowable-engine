@@ -14,17 +14,21 @@
 	</parent>
 
 	<packaging>pom</packaging>
-	<version>6.0.1-SNAPSHOT</version>
+	<version>6.2.0-SNAPSHOT</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jdk.version>1.7</jdk.version>
-		<spring.framework.version>4.2.5.RELEASE</spring.framework.version>
-		<spring.security.version>4.0.4.RELEASE</spring.security.version>
+		<spring.framework.version>4.3.9.RELEASE</spring.framework.version>
+		<spring.security.version>4.2.3.RELEASE</spring.security.version>
 		<jackson.version>2.7.5</jackson.version>
-		<mule.version>3.5.0</mule.version>
+		<mule.version>3.8.0</mule.version>
 		<cxf.version>3.1.6</cxf.version>
 		<batik.version>1.7</batik.version>
-		<!-- JVM params for test execution -->
+
+        <checkstyle.config.location>checkstyle/flowable-checkstyle.xml</checkstyle.config.location>
+        <checkstyle.suppressions.location>/checkstyle/flowable-suppressions.xml</checkstyle.suppressions.location>
+
+        <!-- JVM params for test execution -->
 		<argLine>-Duser.language=en</argLine>
 
 		<!-- OSGi bundles properties -->
@@ -126,12 +130,12 @@
 			<dependency>
 				<groupId>org.apache.httpcomponents</groupId>
 				<artifactId>httpclient</artifactId>
-				<version>4.3.5</version>
+				<version>4.5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.httpcomponents</groupId>
 				<artifactId>httpmime</artifactId>
-				<version>4.3.5</version>
+				<version>4.5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>com.oracle.jdbc</groupId>
@@ -177,24 +181,9 @@
 				<version>2.2.11</version>
 			</dependency>
 			<dependency>
-				<groupId>de.odysseus.juel</groupId>
-				<artifactId>juel-api</artifactId>
-				<version>2.2.7</version>
-			</dependency>
-			<dependency>
-				<groupId>de.odysseus.juel</groupId>
-				<artifactId>juel-impl</artifactId>
-				<version>2.2.7</version>
-			</dependency>
-			<dependency>
-				<groupId>de.odysseus.juel</groupId>
-				<artifactId>juel-spi</artifactId>
-				<version>2.2.7</version>
-			</dependency>
-			<dependency>
 				<groupId>junit</groupId>
 				<artifactId>junit</artifactId>
-				<version>4.11</version>
+				<version>4.12</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
@@ -406,6 +395,11 @@
 			</dependency>
 			<dependency>
 				<groupId>org.flowable</groupId>
+				<artifactId>flowable-http</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.flowable</groupId>
 				<artifactId>flowable-crystalball</artifactId>
 				<version>${project.version}</version>
 			</dependency>
@@ -468,6 +462,11 @@
 			<dependency>
 			    <groupId>org.flowable</groupId>
 			    <artifactId>flowable-ui-common</artifactId>
+			    <version>${project.version}</version>
+			</dependency>
+            <dependency>
+			    <groupId>org.flowable</groupId>
+			    <artifactId>flowable-groovy-script-static-engine</artifactId>
 			    <version>${project.version}</version>
 			</dependency>
 			<!-- EMAIL -->
@@ -869,7 +868,7 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
+				<version>3.6.1</version>
 				<configuration>
 					<source>${jdk.version}</source>
 					<target>${jdk.version}</target>
@@ -880,7 +879,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.7.1</version>
+				<version>2.20</version>
 				<configuration>
 					<failIfNoTests>false</failIfNoTests>
 					<trimStackTrace>false</trimStackTrace>
@@ -928,7 +927,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jar-plugin</artifactId>
-					<version>2.3.2</version>
+					<version>3.0.2</version>
 				</plugin>
 				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
@@ -959,7 +958,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-release-plugin</artifactId>
-					<version>2.4.2</version>
+					<version>2.5.3</version>
 					<configuration>
 						<mavenExecutorId>forked-path</mavenExecutorId>
 						<useReleaseProfile>false</useReleaseProfile>
@@ -1020,6 +1019,7 @@
 				<module>modules/flowable-spring-boot</module>
 				<module>modules/flowable-cxf</module>
 				<module>modules/flowable-mule</module>
+				<module>modules/flowable-http</module>
 				<module>modules/flowable-camel</module>
 				<module>modules/flowable-cdi</module>
 				<module>modules/flowable-osgi</module>
@@ -1032,6 +1032,7 @@
 				<module>modules/flowable-ui-modeler</module>
 				<module>modules/flowable-ui-task</module>
 				<module>modules/flowable-ui-admin</module>
+				<module>modules/flowable-groovy-script-static-engine</module>
 				<module>tooling/archetypes/flowable-archetype-unittest</module>
 			</modules>
 			<build>
@@ -1219,6 +1220,7 @@
 				<module>modules/flowable-osgi</module>
 				<module>modules/flowable-camel</module>
 				<module>modules/flowable-mule</module>
+				<module>modules/flowable-http</module>
 				<module>modules/flowable-cdi</module>
 				<module>modules/flowable-ldap</module>
 				<module>modules/flowable-ldap-configurator</module>
@@ -1226,6 +1228,7 @@
 				<module>modules/flowable-jms-spring-executor</module>
 				<module>modules/flowable-crystalball</module>
 				<module>modules/flowable-ui-common</module>
+				<module>modules/flowable-groovy-script-static-engine</module>
 				<module>tooling/archetypes/flowable-archetype-unittest</module>
 			</modules>
 		</profile>
@@ -1379,6 +1382,7 @@
 				<module>modules/flowable-content-spring</module>
 				<module>modules/flowable-content-spring-configurator</module>
 				<module>modules/flowable-content-rest</module>
+				<module>modules/flowable-groovy-script-static-engine</module>
 			</modules>
 			<properties>
 				<skipTests>true</skipTests>
@@ -1424,6 +1428,16 @@
 			</build>
 		</profile>
 	</profiles>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.17</version>
+            </plugin>
+        </plugins>
+    </reporting>
 
 	<!-- Various information, not used by the build -->
 

@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.flowable.engine.history.HistoricVariableInstance;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.task.Task;
@@ -33,7 +34,7 @@ public class DynamicServiceTaskTest extends PluggableFlowableTestCase {
     @Deployment
     public void testChangeClassName() {
         // first test without changing the class name
-        Map<String, Object> varMap = new HashMap<String, Object>();
+        Map<String, Object> varMap = new HashMap<>();
         varMap.put("count", 0);
         varMap.put("count2", 0);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("dynamicServiceTask", varMap);
@@ -50,7 +51,7 @@ public class DynamicServiceTaskTest extends PluggableFlowableTestCase {
         assertProcessEnded(processInstance.getId());
 
         // now test with changing the class name
-        varMap = new HashMap<String, Object>();
+        varMap = new HashMap<>();
         varMap.put("count", 0);
         varMap.put("count2", 0);
         processInstance = runtimeService.startProcessInstanceByKey("dynamicServiceTask", varMap);
@@ -75,14 +76,14 @@ public class DynamicServiceTaskTest extends PluggableFlowableTestCase {
     public void testChangeExpression() {
         // first test without changing the class name
         DummyTestBean testBean = new DummyTestBean();
-        Map<String, Object> varMap = new HashMap<String, Object>();
+        Map<String, Object> varMap = new HashMap<>();
         varMap.put("bean", testBean);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("dynamicServiceTask", varMap);
 
         Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         taskService.complete(task.getId());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricVariableInstance historicVariableInstance = historyService.createHistoricVariableInstanceQuery()
                     .processInstanceId(processInstance.getId())
                     .variableName("executed")
@@ -95,7 +96,7 @@ public class DynamicServiceTaskTest extends PluggableFlowableTestCase {
 
         // now test with changing the class name
         testBean = new DummyTestBean();
-        varMap = new HashMap<String, Object>();
+        varMap = new HashMap<>();
         varMap.put("bean2", testBean);
         processInstance = runtimeService.startProcessInstanceByKey("dynamicServiceTask", varMap);
 
@@ -106,7 +107,7 @@ public class DynamicServiceTaskTest extends PluggableFlowableTestCase {
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         taskService.complete(task.getId());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricVariableInstance historicVariableInstance = historyService.createHistoricVariableInstanceQuery()
                     .processInstanceId(processInstance.getId())
                     .variableName("executed")
@@ -122,14 +123,14 @@ public class DynamicServiceTaskTest extends PluggableFlowableTestCase {
     public void testChangeDelegateExpression() {
         // first test without changing the class name
         DummyTestDelegateBean testBean = new DummyTestDelegateBean();
-        Map<String, Object> varMap = new HashMap<String, Object>();
+        Map<String, Object> varMap = new HashMap<>();
         varMap.put("bean", testBean);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("dynamicServiceTask", varMap);
 
         Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         taskService.complete(task.getId());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricVariableInstance historicVariableInstance = historyService.createHistoricVariableInstanceQuery()
                     .processInstanceId(processInstance.getId())
                     .variableName("executed")
@@ -142,7 +143,7 @@ public class DynamicServiceTaskTest extends PluggableFlowableTestCase {
 
         // now test with changing the class name
         testBean = new DummyTestDelegateBean();
-        varMap = new HashMap<String, Object>();
+        varMap = new HashMap<>();
         varMap.put("bean2", testBean);
         processInstance = runtimeService.startProcessInstanceByKey("dynamicServiceTask", varMap);
 
@@ -153,7 +154,7 @@ public class DynamicServiceTaskTest extends PluggableFlowableTestCase {
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         taskService.complete(task.getId());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricVariableInstance historicVariableInstance = historyService.createHistoricVariableInstanceQuery()
                     .processInstanceId(processInstance.getId())
                     .variableName("executed")

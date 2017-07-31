@@ -46,20 +46,20 @@
 
   <!-- DEPLOYMENT SELECT -->
 
-  <select id="selectDeploymentsByQueryCriteria" parameterType="org.flowable.dmn.engine.impl.DmnDeploymentQueryImpl" resultMap="deploymentResultMap">
-  	${limitBefore}
-    select distinct RES.* ${limitBetween}
-    <include refid="selectDeploymentsByQueryCriteriaSql"/>
+  <select id="selectDmnDeploymentsByQueryCriteria" parameterType="org.flowable.dmn.engine.impl.DmnDeploymentQueryImpl" resultMap="deploymentResultMap">
+  	<if test="firstResult != null and firstResult &gt;= 0">${limitBefore}</if>
+    select distinct RES.* <if test="firstResult != null and firstResult &gt;= 0">${limitBetween}</if>
+    <include refid="selectDmnDeploymentsByQueryCriteriaSql"/>
     ${orderBy}
-    ${limitAfter}
+    <if test="firstResult != null and firstResult &gt;= 0">${limitAfter}</if>
   </select>
 
-  <select id="selectDeploymentCountByQueryCriteria" parameterType="org.flowable.dmn.engine.impl.DmnDeploymentQueryImpl" resultType="long">
+  <select id="selectDmnDeploymentCountByQueryCriteria" parameterType="org.flowable.dmn.engine.impl.DmnDeploymentQueryImpl" resultType="long">
     select count(distinct RES.ID_)
-    <include refid="selectDeploymentsByQueryCriteriaSql"/>
+    <include refid="selectDmnDeploymentsByQueryCriteriaSql"/>
   </select>
   
-  <sql id="selectDeploymentsByQueryCriteriaSql">  
+  <sql id="selectDmnDeploymentsByQueryCriteriaSql">  
     from ${prefix}ACT_DMN_DEPLOYMENT RES
     <if test="decisionTableKey != null or decisionTableKeyLike != null">
     	inner join ${prefix}ACT_DMN_DECISION_TABLE DECISIONTABLE on RES.ID_ = DECISIONTABLE.DEPLOYMENT_ID_
@@ -104,34 +104,30 @@
     </where>
   </sql>
     
-  <select id="selectDeploymentsByName" parameterType="org.flowable.engine.common.impl.db.ListQueryParameterObject" resultMap="deploymentResultMap">
-    select * from ${prefix}ACT_DMN_DEPLOYMENT D where NAME_=#{parameter} order by D.DEPLOY_TIME_ desc
-  </select>
-  
   <select id="selectDmnDeployment" parameterType="string" resultMap="deploymentResultMap">
     select * from ${prefix}ACT_DMN_DEPLOYMENT where ID_ = #{id, jdbcType=VARCHAR}
   </select>
 
   <!-- mysql specific -->
-  <select id="selectDeploymentsByQueryCriteria" databaseId="mysql" parameterType="org.flowable.dmn.engine.impl.DmnDeploymentQueryImpl" resultMap="deploymentResultMap">
-  	${limitBefore}
-    select distinct RES.* ${limitBetween}
-    <include refid="selectDeploymentsByQueryCriteriaSql"/>
+  <select id="selectDmnDeploymentsByQueryCriteria" databaseId="mysql" parameterType="org.flowable.dmn.engine.impl.DmnDeploymentQueryImpl" resultMap="deploymentResultMap">
+  	<if test="firstResult != null and firstResult &gt;= 0">${limitBefore}</if>
+    select distinct RES.* <if test="firstResult != null and firstResult &gt;= 0">${limitBetween}</if>
+    <include refid="selectDmnDeploymentsByQueryCriteriaSql"/>
    	${orderBy}
-    ${limitAfter}
+    <if test="firstResult != null and firstResult &gt;= 0">${limitAfter}</if>
   </select>
   
   <!-- mysql specific -->
-  <select id="selectDeploymentCountByQueryCriteria" databaseId="mysql" parameterType="org.flowable.dmn.engine.impl.DmnDeploymentQueryImpl" resultType="long">
+  <select id="selectDmnDeploymentCountByQueryCriteria" databaseId="mysql" parameterType="org.flowable.dmn.engine.impl.DmnDeploymentQueryImpl" resultType="long">
     select distinct count(RES.ID_)
-    <include refid="selectDeploymentsByQueryCriteriaSql"/>
+    <include refid="selectDmnDeploymentsByQueryCriteriaSql"/>
   </select>
 
-  <select id="selectDeploymentByNativeQuery" parameterType="java.util.Map" resultMap="deploymentResultMap">
+  <select id="selectDmnDeploymentByNativeQuery" parameterType="java.util.Map" resultMap="deploymentResultMap">
     <include refid="org.flowable.dmn.engine.db.common.selectByNativeQuery"/>
   </select>
 
-  <select id="selectDeploymentCountByNativeQuery" parameterType="java.util.Map" resultType="long">
+  <select id="selectDmnDeploymentCountByNativeQuery" parameterType="java.util.Map" resultType="long">
     ${sql}
   </select>
 

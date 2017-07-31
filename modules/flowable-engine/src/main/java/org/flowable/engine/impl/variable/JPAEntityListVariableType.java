@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.impl.context.Context;
+import org.flowable.engine.common.impl.context.Context;
 
 /**
  * Variable type capable of storing a list of reference to JPA-entities. Only JPA-Entities which are configured by annotations are supported. Use of compound primary keys is not supported. <br>
@@ -99,7 +99,7 @@ public class JPAEntityListVariableType implements VariableType, CacheableVariabl
 
         if (value instanceof List<?> && ((List<?>) value).size() > 0) {
             List<?> list = (List<?>) value;
-            List<String> ids = new ArrayList<String>();
+            List<String> ids = new ArrayList<>();
 
             String type = mappings.getJPAClassString(list.get(0));
             for (Object entry : list) {
@@ -125,7 +125,7 @@ public class JPAEntityListVariableType implements VariableType, CacheableVariabl
         if (valueFields.getTextValue() != null && bytes != null) {
             String entityClass = valueFields.getTextValue();
 
-            List<Object> result = new ArrayList<Object>();
+            List<Object> result = new ArrayList<>();
             String[] ids = deserializeIds(bytes);
 
             for (String id : ids) {

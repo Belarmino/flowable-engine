@@ -16,6 +16,7 @@
         <result property="exceptionMessage" column="EXCEPTION_MSG_" jdbcType="VARCHAR" />
         <result property="jobHandlerType" column="HANDLER_TYPE_" jdbcType="VARCHAR" />
         <result property="jobHandlerConfiguration" column="HANDLER_CFG_" jdbcType="VARCHAR" />
+        <result property="createTime" column="CREATE_TIME_" jdbcType="TIMESTAMP" />
         <result property="tenantId" column="TENANT_ID_" jdbcType="VARCHAR" />
         <result property="duedate" column="DUEDATE_" jdbcType="TIMESTAMP" />
         <result property="repeat" column="REPEAT_" jdbcType="VARCHAR" />
@@ -58,6 +59,7 @@
             REPEAT_,
             HANDLER_TYPE_,
             HANDLER_CFG_,
+            CREATE_TIME_,
             TENANT_ID_)
     values (#{id, jdbcType=VARCHAR},
     		#{revision, jdbcType=INTEGER},
@@ -72,12 +74,13 @@
             #{repeat, jdbcType=VARCHAR},
             #{jobHandlerType, jdbcType=VARCHAR},
             #{jobHandlerConfiguration, jdbcType=VARCHAR},
+            #{createTime, jdbcType=TIMESTAMP},
             #{tenantId, jdbcType=VARCHAR}
     )
   	</insert>
 
   	<insert id="bulkInsertDeadLetterJob" parameterType="java.util.List">
-    INSERT INTO ${prefix}ACT_RU_DEADLETTER_JOB (
+        INSERT INTO ${prefix}ACT_RU_DEADLETTER_JOB (
             ID_,
             REV_,
             TYPE_,
@@ -91,8 +94,9 @@
             REPEAT_,
             HANDLER_TYPE_,
             HANDLER_CFG_,
-            TENANT_ID_) VALUES
-	    <foreach collection="list" item="job" index="index" separator=",">
+            CREATE_TIME_,
+            TENANT_ID_) VALUES 
+	    <foreach collection="list" item="job" index="index" separator=","> 
 	        (#{job.id, jdbcType=VARCHAR},
 	         #{job.revision, jdbcType=INTEGER},
 	         #{job.jobType, jdbcType=VARCHAR},
@@ -106,52 +110,55 @@
 	         #{job.repeat, jdbcType=VARCHAR},
 	         #{job.jobHandlerType, jdbcType=VARCHAR},
 	         #{job.jobHandlerConfiguration, jdbcType=VARCHAR},
+             #{job.createTime, jdbcType=TIMESTAMP},
 	         #{job.tenantId, jdbcType=VARCHAR})
 	    </foreach>
   	</insert>
 
-  <insert id="bulkInsertDeadLetterJob" databaseId="oracle" parameterType="java.util.List">
-    INSERT ALL
-    <foreach collection="list" item="job" index="index">
-      INTO ${prefix}ACT_RU_DEADLETTER_JOB (
-      ID_,
-      REV_,
-      TYPE_,
-      EXCLUSIVE_,
-      EXECUTION_ID_,
-      PROCESS_INSTANCE_ID_,
-      PROC_DEF_ID_,
-      EXCEPTION_STACK_ID_,
-      EXCEPTION_MSG_,
-      DUEDATE_,
-      REPEAT_,
-      HANDLER_TYPE_,
-      HANDLER_CFG_,
-      TENANT_ID_) VALUES
-      (#{job.id, jdbcType=VARCHAR},
-       #{job.revision, jdbcType=INTEGER},
-       #{job.jobType, jdbcType=VARCHAR},
-       #{job.exclusive, jdbcType=BOOLEAN},
-       #{job.executionId, jdbcType=VARCHAR},
-       #{job.processInstanceId, jdbcType=VARCHAR},
-       #{job.processDefinitionId, jdbcType=VARCHAR},
-       #{job.exceptionByteArrayRef, typeHandler=ByteArrayRefTypeHandler},
-       #{job.exceptionMessage, jdbcType=VARCHAR},
-       #{job.duedate, jdbcType=TIMESTAMP},
-       #{job.repeat, jdbcType=VARCHAR},
-       #{job.jobHandlerType, jdbcType=VARCHAR},
-       #{job.jobHandlerConfiguration, jdbcType=VARCHAR},
-       #{job.tenantId, jdbcType=VARCHAR})
-    </foreach>
-    SELECT * FROM dual
-  </insert>
+  	<insert id="bulkInsertDeadLetterJob" databaseId="oracle" parameterType="java.util.List">
+    	INSERT ALL
+    	<foreach collection="list" item="job" index="index">
+      		INTO ${prefix}ACT_RU_DEADLETTER_JOB (
+      		ID_,
+      		REV_,
+      		TYPE_,
+      		EXCLUSIVE_,
+      		EXECUTION_ID_,
+      		PROCESS_INSTANCE_ID_,
+      		PROC_DEF_ID_,
+      		EXCEPTION_STACK_ID_,
+      		EXCEPTION_MSG_,
+      		DUEDATE_,
+      		REPEAT_,
+      		HANDLER_TYPE_,
+      		HANDLER_CFG_,
+            CREATE_TIME_,
+      		TENANT_ID_) VALUES 
+      		(#{job.id, jdbcType=VARCHAR},
+       		#{job.revision, jdbcType=INTEGER},
+       		#{job.jobType, jdbcType=VARCHAR},
+       		#{job.exclusive, jdbcType=BOOLEAN},
+       		#{job.executionId, jdbcType=VARCHAR},
+       		#{job.processInstanceId, jdbcType=VARCHAR},
+       		#{job.processDefinitionId, jdbcType=VARCHAR},
+       		#{job.exceptionByteArrayRef, typeHandler=ByteArrayRefTypeHandler},
+       		#{job.exceptionMessage, jdbcType=VARCHAR},
+       		#{job.duedate, jdbcType=TIMESTAMP},
+       		#{job.repeat, jdbcType=VARCHAR},
+       		#{job.jobHandlerType, jdbcType=VARCHAR},
+       		#{job.jobHandlerConfiguration, jdbcType=VARCHAR},
+            #{job.createTime, jdbcType=TIMESTAMP},
+       		#{job.tenantId, jdbcType=VARCHAR})
+    	</foreach>
+    	SELECT * FROM dual
+  	</insert>
 
     <select id="selectDeadLetterJobByQueryCriteria" parameterType="org.flowable.engine.impl.JobQueryImpl" resultMap="jobResultMap">
-        ${limitBefore}
-        select RES.* ${limitBetween}
+        <if test="firstResult != null and firstResult &gt;= 0">${limitBefore}</if>
+        select RES.* <if test="firstResult != null and firstResult &gt;= 0">${limitBetween}</if>
         <include refid="selectDeadLetterJobByQueryCriteriaSql"/>
         ${orderBy}
-        ${limitAfter}
+        <if test="firstResult != null and firstResult &gt;= 0">${limitAfter}</if>
     </select>
 
     <select id="selectDeadLetterJobCountByQueryCriteria" parameterType="org.flowable.engine.impl.JobQueryImpl" resultType="long">

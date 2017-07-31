@@ -54,6 +54,18 @@ public class CallActivityJsonConverter extends BaseBpmnJsonConverter {
         if (StringUtils.isNotEmpty(callActivity.getCalledElement())) {
             propertiesNode.put(PROPERTY_CALLACTIVITY_CALLEDELEMENT, callActivity.getCalledElement());
         }
+        
+        if (callActivity.isInheritVariables()) {
+            propertiesNode.put(PROPERTY_CALLACTIVITY_INHERIT_VARIABLES, callActivity.isInheritVariables());
+        }
+        
+        if (callActivity.isInheritBusinessKey()) {
+            propertiesNode.put(PROPERTY_CALLACTIVITY_INHERIT_BUSINESS_KEY, callActivity.isInheritBusinessKey());
+        }
+        
+        if (callActivity.isUseLocalScopeForOutParameters()) {
+            propertiesNode.put(PROPERTY_CALLACTIVITY_USE_LOCALSCOPE_FOR_OUTPARAMETERS, callActivity.isUseLocalScopeForOutParameters());
+        }
 
         addJsonParameters(PROPERTY_CALLACTIVITY_IN, "inParameters", callActivity.getInParameters(), propertiesNode);
         addJsonParameters(PROPERTY_CALLACTIVITY_OUT, "outParameters", callActivity.getOutParameters(), propertiesNode);
@@ -92,6 +104,18 @@ public class CallActivityJsonConverter extends BaseBpmnJsonConverter {
         if (StringUtils.isNotEmpty(getPropertyValueAsString(PROPERTY_CALLACTIVITY_CALLEDELEMENT, elementNode))) {
             callActivity.setCalledElement(getPropertyValueAsString(PROPERTY_CALLACTIVITY_CALLEDELEMENT, elementNode));
         }
+        
+        if (getPropertyValueAsBoolean(PROPERTY_CALLACTIVITY_INHERIT_VARIABLES, elementNode)) {
+            callActivity.setInheritVariables(true);
+        }
+        
+        if (getPropertyValueAsBoolean(PROPERTY_CALLACTIVITY_INHERIT_BUSINESS_KEY, elementNode)) {
+            callActivity.setInheritBusinessKey(true);
+        }
+        
+        if (getPropertyValueAsBoolean(PROPERTY_CALLACTIVITY_USE_LOCALSCOPE_FOR_OUTPARAMETERS, elementNode)) {
+            callActivity.setUseLocalScopeForOutParameters(true);
+        }
 
         callActivity.getInParameters().addAll(convertToIOParameters(PROPERTY_CALLACTIVITY_IN, "inParameters", elementNode));
         callActivity.getOutParameters().addAll(convertToIOParameters(PROPERTY_CALLACTIVITY_OUT, "outParameters", elementNode));
@@ -100,7 +124,7 @@ public class CallActivityJsonConverter extends BaseBpmnJsonConverter {
     }
 
     private List<IOParameter> convertToIOParameters(String propertyName, String valueName, JsonNode elementNode) {
-        List<IOParameter> ioParameters = new ArrayList<IOParameter>();
+        List<IOParameter> ioParameters = new ArrayList<>();
         JsonNode parametersNode = getProperty(propertyName, elementNode);
         if (parametersNode != null) {
             parametersNode = BpmnJsonConverterUtil.validateIfNodeIsTextual(parametersNode);

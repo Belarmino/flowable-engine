@@ -20,10 +20,11 @@ import java.util.Map;
 
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
 import org.flowable.engine.common.api.FlowableObjectNotFoundException;
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.Command;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.task.Task;
@@ -41,7 +42,7 @@ public class VariableScopeTest extends PluggableFlowableTestCase {
 
         // After starting the process, the task in the subprocess should be
         // active
-        Map<String, Object> varMap = new HashMap<String, Object>();
+        Map<String, Object> varMap = new HashMap<>();
         varMap.put("test", "test");
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("simpleSubProcess", varMap);
         Task subProcessTask = taskService.createTaskQuery().processInstanceId(pi.getId()).singleResult();
@@ -94,7 +95,7 @@ public class VariableScopeTest extends PluggableFlowableTestCase {
 
         // After starting the process, the task in the subprocess should be
         // active
-        Map<String, Object> varMap = new HashMap<String, Object>();
+        Map<String, Object> varMap = new HashMap<>();
         varMap.put("test", "test");
         varMap.put("helloWorld", "helloWorld");
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("simpleSubProcess", varMap);
@@ -155,7 +156,7 @@ public class VariableScopeTest extends PluggableFlowableTestCase {
 
         // After starting the process, the task in the subprocess should be
         // active
-        Map<String, Object> varMap = new HashMap<String, Object>();
+        Map<String, Object> varMap = new HashMap<>();
         ProcessInstance pi = runtimeService.startProcessInstanceByKey("nestedSubProcess", varMap);
         Task subProcessTask = taskService.createTaskQuery().processInstanceId(pi.getId()).singleResult();
         assertEquals("Task in subprocess1", subProcessTask.getName());
@@ -271,7 +272,7 @@ public class VariableScopeTest extends PluggableFlowableTestCase {
                 throw new FlowableIllegalArgumentException("executionId is null");
             }
 
-            ExecutionEntity execution = commandContext.getExecutionEntityManager().findById(executionId);
+            ExecutionEntity execution = CommandContextUtil.getExecutionEntityManager(commandContext).findById(executionId);
 
             if (execution == null) {
                 throw new FlowableObjectNotFoundException("execution " + executionId + " doesn't exist", Execution.class);
@@ -279,9 +280,9 @@ public class VariableScopeTest extends PluggableFlowableTestCase {
 
             List<String> executionVariables;
             if (isLocal) {
-                executionVariables = new ArrayList<String>(execution.getVariableNamesLocal());
+                executionVariables = new ArrayList<>(execution.getVariableNamesLocal());
             } else {
-                executionVariables = new ArrayList<String>(execution.getVariableNames());
+                executionVariables = new ArrayList<>(execution.getVariableNames());
             }
 
             return executionVariables;

@@ -12,24 +12,26 @@
  */
 package org.flowable.app.rest.editor;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.app.domain.editor.AbstractModel;
-import org.flowable.app.domain.editor.AppDefinition;
 import org.flowable.app.domain.editor.Model;
 import org.flowable.app.model.common.ResultListDataRepresentation;
 import org.flowable.app.model.editor.ModelKeyRepresentation;
 import org.flowable.app.model.editor.ModelRepresentation;
-import org.flowable.app.model.editor.decisiontable.DecisionTableDefinitionRepresentation;
 import org.flowable.app.security.SecurityUtils;
 import org.flowable.app.service.api.ModelService;
 import org.flowable.app.service.editor.FlowableModelQueryService;
 import org.flowable.app.service.exception.BadRequestException;
 import org.flowable.app.service.exception.InternalServerErrorException;
-import org.flowable.form.model.FormModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,15 +43,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 @RestController
 public class ModelsResource {
 
-    private final Logger logger = LoggerFactory.getLogger(ModelsResource.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelsResource.class);
 
     @Autowired
     protected FlowableModelQueryService modelQueryService;
@@ -88,7 +85,7 @@ public class ModelsResource {
         try {
             modelRepresentationJson = objectMapper.writeValueAsString(modelRepresentation);
         } catch (Exception e) {
-            logger.error("Error while processing Model representation json", e);
+            LOGGER.error("Error while processing Model representation json", e);
             throw new InternalServerErrorException("Model Representation could not be saved");
         }
 
@@ -180,6 +177,8 @@ public class ModelsResource {
             stencilNode.put("id", "StartNoneEvent");
             json = editorNode.toString();
         }
+        String json = modelService.createModelJson(modelRepresentation);
+
         Model newModel = modelService.createModel(modelRepresentation, json, SecurityUtils.getCurrentUserObject());
         return new ModelRepresentation(newModel);
     }

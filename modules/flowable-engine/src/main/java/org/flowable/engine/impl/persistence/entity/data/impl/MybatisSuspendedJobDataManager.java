@@ -15,7 +15,6 @@ package org.flowable.engine.impl.persistence.entity.data.impl;
 import java.util.HashMap;
 import java.util.List;
 
-import org.flowable.engine.common.impl.Page;
 import org.flowable.engine.impl.SuspendedJobQueryImpl;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.persistence.CachedEntityMatcher;
@@ -49,9 +48,9 @@ public class MybatisSuspendedJobDataManager extends AbstractDataManager<Suspende
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<Job> findJobsByQueryCriteria(SuspendedJobQueryImpl jobQuery, Page page) {
+    public List<Job> findJobsByQueryCriteria(SuspendedJobQueryImpl jobQuery) {
         String query = "selectSuspendedJobByQueryCriteria";
-        return getDbSqlSession().selectList(query, jobQuery, page);
+        return getDbSqlSession().selectList(query, jobQuery);
     }
 
     @Override
@@ -72,7 +71,7 @@ public class MybatisSuspendedJobDataManager extends AbstractDataManager<Suspende
 
     @Override
     public void updateJobTenantIdForDeployment(String deploymentId, String newTenantId) {
-        HashMap<String, Object> params = new HashMap<String, Object>();
+        HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
         getDbSqlSession().update("updateSuspendedJobTenantIdForDeployment", params);

@@ -19,6 +19,7 @@ import java.util.Map;
 import org.flowable.engine.common.impl.util.CollectionUtil;
 import org.flowable.engine.impl.history.HistoryLevel;
 import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
@@ -116,7 +117,7 @@ public class Flowable6Test extends PluggableFlowableTestCase {
     public void testLongServiceTaskLoop() {
         int maxCount = 3210; // You can make this as big as you want (as long as it still fits within transaction timeouts).
                              // Go on, try it!
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("counter", 0);
         vars.put("maxCount", maxCount);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("testLongServiceTaskLoop", vars);
@@ -126,7 +127,7 @@ public class Flowable6Test extends PluggableFlowableTestCase {
         assertEquals(maxCount, CountingServiceTaskTestDelegate.CALL_COUNT.get());
         assertEquals(0, runtimeService.createExecutionQuery().count());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration, 1800000)) {
             assertEquals(maxCount, historyService.createHistoricActivityInstanceQuery()
                     .processInstanceId(processInstance.getId()).activityId("serviceTask").count());
         }
@@ -134,7 +135,7 @@ public class Flowable6Test extends PluggableFlowableTestCase {
 
     @org.flowable.engine.test.Deployment
     public void testScriptTask() {
-        Map<String, Object> variableMap = new HashMap<String, Object>();
+        Map<String, Object> variableMap = new HashMap<>();
         variableMap.put("a", 1);
         variableMap.put("b", 2);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("oneTaskProcess", variableMap);

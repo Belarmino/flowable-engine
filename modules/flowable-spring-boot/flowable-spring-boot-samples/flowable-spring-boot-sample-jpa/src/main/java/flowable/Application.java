@@ -1,5 +1,15 @@
 package flowable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.runtime.Execution;
@@ -13,15 +23,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @SpringBootApplication
 public class Application {
@@ -62,13 +63,13 @@ class PhotoService {
     }
 
     public void launchPhotoProcess(String... photoLabels) {
-        List<Photo> photos = new ArrayList<Photo>();
+        List<Photo> photos = new ArrayList<>();
         for (String l : photoLabels) {
             Photo x = this.photoRepository.save(new Photo(l));
             photos.add(x);
         }
 
-        Map<String, Object> procVars = new HashMap<String, Object>();
+        Map<String, Object> procVars = new HashMap<>();
         procVars.put("photos", photos);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("dogeProcess", procVars);
 

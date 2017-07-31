@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.flowable.bpmn.model.Signal;
 import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.impl.Page;
 import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
 import org.flowable.engine.impl.EventSubscriptionQueryImpl;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
@@ -143,7 +142,7 @@ public class EventSubscriptionEntityManagerImpl extends AbstractEntityManager<Ev
     @Override
     public List<CompensateEventSubscriptionEntity> findCompensateEventSubscriptionsByExecutionIdAndActivityId(String executionId, String activityId) {
         List<EventSubscriptionEntity> eventSubscriptions = findEventSubscriptionsByExecutionAndType(executionId, "compensate");
-        List<CompensateEventSubscriptionEntity> result = new ArrayList<CompensateEventSubscriptionEntity>();
+        List<CompensateEventSubscriptionEntity> result = new ArrayList<>();
         for (EventSubscriptionEntity eventSubscriptionEntity : eventSubscriptions) {
             if (eventSubscriptionEntity instanceof CompensateEventSubscriptionEntity) {
                 if (activityId == null || activityId.equals(eventSubscriptionEntity.getActivityId())) {
@@ -157,7 +156,7 @@ public class EventSubscriptionEntityManagerImpl extends AbstractEntityManager<Ev
     @Override
     public List<CompensateEventSubscriptionEntity> findCompensateEventSubscriptionsByProcessInstanceIdAndActivityId(String processInstanceId, String activityId) {
         List<EventSubscriptionEntity> eventSubscriptions = findEventSubscriptionsByProcessInstanceAndActivityId(processInstanceId, activityId, "compensate");
-        List<CompensateEventSubscriptionEntity> result = new ArrayList<CompensateEventSubscriptionEntity>();
+        List<CompensateEventSubscriptionEntity> result = new ArrayList<>();
         for (EventSubscriptionEntity eventSubscriptionEntity : eventSubscriptions) {
             result.add((CompensateEventSubscriptionEntity) eventSubscriptionEntity);
         }
@@ -178,8 +177,8 @@ public class EventSubscriptionEntityManagerImpl extends AbstractEntityManager<Ev
     }
 
     @Override
-    public List<EventSubscription> findEventSubscriptionsByQueryCriteria(EventSubscriptionQueryImpl eventSubscriptionQueryImpl, Page page) {
-        return eventSubscriptionDataManager.findEventSubscriptionsByQueryCriteria(eventSubscriptionQueryImpl, page);
+    public List<EventSubscription> findEventSubscriptionsByQueryCriteria(EventSubscriptionQueryImpl eventSubscriptionQueryImpl) {
+        return eventSubscriptionDataManager.findEventSubscriptionsByQueryCriteria(eventSubscriptionQueryImpl);
     }
 
     @Override
@@ -288,7 +287,7 @@ public class EventSubscriptionEntityManagerImpl extends AbstractEntityManager<Ev
     }
 
     protected List<SignalEventSubscriptionEntity> toSignalEventSubscriptionEntityList(List<EventSubscriptionEntity> result) {
-        List<SignalEventSubscriptionEntity> signalEventSubscriptionEntities = new ArrayList<SignalEventSubscriptionEntity>(result.size());
+        List<SignalEventSubscriptionEntity> signalEventSubscriptionEntities = new ArrayList<>(result.size());
         for (EventSubscriptionEntity eventSubscriptionEntity : result) {
             signalEventSubscriptionEntities.add((SignalEventSubscriptionEntity) eventSubscriptionEntity);
         }
@@ -296,7 +295,7 @@ public class EventSubscriptionEntityManagerImpl extends AbstractEntityManager<Ev
     }
 
     protected List<MessageEventSubscriptionEntity> toMessageEventSubscriptionEntityList(List<EventSubscriptionEntity> result) {
-        List<MessageEventSubscriptionEntity> messageEventSubscriptionEntities = new ArrayList<MessageEventSubscriptionEntity>(result.size());
+        List<MessageEventSubscriptionEntity> messageEventSubscriptionEntities = new ArrayList<>(result.size());
         for (EventSubscriptionEntity eventSubscriptionEntity : result) {
             messageEventSubscriptionEntities.add((MessageEventSubscriptionEntity) eventSubscriptionEntity);
         }

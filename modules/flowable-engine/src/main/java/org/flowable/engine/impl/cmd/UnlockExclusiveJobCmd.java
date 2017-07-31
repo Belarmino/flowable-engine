@@ -15,9 +15,10 @@ package org.flowable.engine.impl.cmd;
 import java.io.Serializable;
 
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.Command;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.runtime.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,7 @@ public class UnlockExclusiveJobCmd implements Command<Object>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static Logger log = LoggerFactory.getLogger(UnlockExclusiveJobCmd.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UnlockExclusiveJobCmd.class);
 
     protected Job job;
 
@@ -44,15 +45,15 @@ public class UnlockExclusiveJobCmd implements Command<Object>, Serializable {
             throw new FlowableIllegalArgumentException("job is null");
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Unlocking exclusive job {}", job.getId());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Unlocking exclusive job {}", job.getId());
         }
 
         if (job.isExclusive()) {
             if (job.getProcessInstanceId() != null) {
-                ExecutionEntity execution = commandContext.getExecutionEntityManager().findById(job.getProcessInstanceId());
+                ExecutionEntity execution = CommandContextUtil.getExecutionEntityManager(commandContext).findById(job.getProcessInstanceId());
                 if (execution != null) {
-                    commandContext.getExecutionEntityManager().clearProcessInstanceLockTime(execution.getId());
+                    CommandContextUtil.getExecutionEntityManager(commandContext).clearProcessInstanceLockTime(execution.getId());
                 }
             }
         }

@@ -22,17 +22,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.impl.persistence.entity.AbstractEntity;
-import org.flowable.engine.impl.db.BulkDeleteable;
+import org.flowable.engine.runtime.JobInfo;
 
 /**
  * Abstract job entity class.
  *
  * @author Tijs Rademakers
  */
-public abstract class AbstractJobEntityImpl extends AbstractEntity implements AbstractJobEntity, BulkDeleteable, Serializable {
+public abstract class AbstractJobEntityImpl extends AbstractEntity implements AbstractRuntimeJobEntity, Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    protected Date createTime;
     protected Date duedate;
 
     protected String executionId;
@@ -57,16 +58,17 @@ public abstract class AbstractJobEntityImpl extends AbstractEntity implements Ab
     protected String jobType;
 
     public Object getPersistentState() {
-        Map<String, Object> persistentState = new HashMap<String, Object>();
+        Map<String, Object> persistentState = new HashMap<>();
         persistentState.put("retries", retries);
+        persistentState.put("createTime", createTime);
         persistentState.put("duedate", duedate);
         persistentState.put("exceptionMessage", exceptionMessage);
         persistentState.put("jobHandlerType", jobHandlerType);
 
         if (exceptionByteArrayRef != null) {
-            persistentState.put("exceptionByteArrayId", exceptionByteArrayRef.getId());
+            persistentState.put("exceptionByteArrayRef", exceptionByteArrayRef);
         }
-
+        
         return persistentState;
     }
 
@@ -76,6 +78,14 @@ public abstract class AbstractJobEntityImpl extends AbstractEntity implements Ab
         executionId = execution.getId();
         processInstanceId = execution.getProcessInstanceId();
         processDefinitionId = execution.getProcessDefinitionId();
+    }
+    
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
     }
 
     public Date getDuedate() {
@@ -211,7 +221,7 @@ public abstract class AbstractJobEntityImpl extends AbstractEntity implements Ab
     }
 
     public void setExceptionMessage(String exceptionMessage) {
-        this.exceptionMessage = StringUtils.abbreviate(exceptionMessage, MAX_EXCEPTION_MESSAGE_LENGTH);
+        this.exceptionMessage = StringUtils.abbreviate(exceptionMessage, JobInfo.MAX_EXCEPTION_MESSAGE_LENGTH);
     }
 
     public ByteArrayRef getExceptionByteArrayRef() {

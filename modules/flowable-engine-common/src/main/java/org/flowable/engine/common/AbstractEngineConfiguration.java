@@ -18,6 +18,7 @@ import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +41,18 @@ import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.api.delegate.event.FlowableEventDispatcher;
 import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
+import org.flowable.engine.common.impl.cfg.CommandExecutorImpl;
 import org.flowable.engine.common.impl.cfg.IdGenerator;
+import org.flowable.engine.common.impl.cfg.TransactionContextFactory;
+import org.flowable.engine.common.impl.db.CustomMyBatisTypeHandlerConfig;
+import org.flowable.engine.common.impl.db.CustomMybatisTypeAliasConfig;
+import org.flowable.engine.common.impl.db.DbSchemaManager;
+import org.flowable.engine.common.impl.db.DbSqlSessionFactory;
+import org.flowable.engine.common.impl.event.EventDispatchAction;
 import org.flowable.engine.common.impl.interceptor.CommandConfig;
+import org.flowable.engine.common.impl.interceptor.CommandContextFactory;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
+import org.flowable.engine.common.impl.interceptor.CommandInterceptor;
 import org.flowable.engine.common.impl.interceptor.SessionFactory;
 import org.flowable.engine.common.impl.persistence.StrongUuidGenerator;
 import org.flowable.engine.common.impl.util.DefaultClockImpl;
@@ -52,7 +63,7 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEngineConfiguration {
 
-    protected static final Logger logger = LoggerFactory.getLogger(AbstractEngineConfiguration.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractEngineConfiguration.class);
 
     /** The tenant id indicating 'no tenant' */
     public static final String NO_TENANT_ID = "";
@@ -91,6 +102,7 @@ public abstract class AbstractEngineConfiguration {
     protected int jdbcPingConnectionNotUsedFor;
     protected int jdbcDefaultTransactionIsolationLevel;
     protected DataSource dataSource;
+    protected DbSchemaManager dbSchemaManager;
 
     protected String databaseSchemaUpdate = DB_SCHEMA_UPDATE_FALSE;
 
@@ -98,8 +110,18 @@ public abstract class AbstractEngineConfiguration {
 
     // COMMAND EXECUTORS ///////////////////////////////////////////////
 
+    protected CommandExecutor commandExecutor;
+    protected Collection<? extends CommandInterceptor> defaultCommandInterceptors;
     protected CommandConfig defaultCommandConfig;
     protected CommandConfig schemaCommandConfig;
+    protected CommandContextFactory commandContextFactory;
+    protected CommandInterceptor commandInvoker;
+    
+    protected List<CommandInterceptor> customPreCommandInterceptors;
+    protected List<CommandInterceptor> customPostCommandInterceptors;
+    protected List<CommandInterceptor> commandInterceptors;
+    
+    protected Map<String, AbstractEngineConfiguration> engineConfigurations = new HashMap<>();
 
     protected ClassLoader classLoader;
     /**
@@ -109,11 +131,17 @@ public abstract class AbstractEngineConfiguration {
 
     // MYBATIS SQL SESSION FACTORY /////////////////////////////////////
 
+    protected DbSqlSessionFactory dbSqlSessionFactory;
     protected SqlSessionFactory sqlSessionFactory;
     protected TransactionFactory transactionFactory;
+    protected TransactionContextFactory transactionContextFactory;
 
     protected Set<Class<?>> customMybatisMappers;
     protected Set<String> customMybatisXMLMappers;
+    
+    protected Set<String> dependentEngineMyBatisXmlMappers;
+    protected List<CustomMybatisTypeAliasConfig> dependentEngineMybatisTypeAliasConfigs;
+    protected List<CustomMyBatisTypeHandlerConfig> dependentEngineMybatisTypeHandlerConfigs;
 
     // SESSION FACTORIES ///////////////////////////////////////////////
     protected List<SessionFactory> customSessionFactories;
@@ -123,6 +151,7 @@ public abstract class AbstractEngineConfiguration {
     protected FlowableEventDispatcher eventDispatcher;
     protected List<FlowableEventListener> eventListeners;
     protected Map<String, List<FlowableEventListener>> typedEventListeners;
+    protected List<EventDispatchAction> additionalEventDispatchActions;
 
     protected boolean transactionsExternallyManaged;
 
@@ -171,7 +200,7 @@ public abstract class AbstractEngineConfiguration {
      */
     protected boolean tablePrefixIsSchema;
 
-    protected static Properties databaseTypeMappings = getDefaultDatabaseTypeMappings();
+    protected Properties databaseTypeMappings = getDefaultDatabaseTypeMappings();
 
     public static final String DATABASE_TYPE_H2 = "h2";
     public static final String DATABASE_TYPE_HSQL = "hsql";
@@ -218,7 +247,7 @@ public abstract class AbstractEngineConfiguration {
     protected IdGenerator idGenerator;
 
     protected Clock clock;
-
+    
     // DataSource
     // ///////////////////////////////////////////////////////////////
 
@@ -236,13 +265,13 @@ public abstract class AbstractEngineConfiguration {
                     throw new FlowableException("DataSource or JDBC properties have to be specified in a process engine configuration");
                 }
 
-                logger.debug("initializing datasource to db: {}", jdbcUrl);
+                LOGGER.debug("initializing datasource to db: {}", jdbcUrl);
 
-                if (logger.isInfoEnabled()) {
-                    logger.info("Configuring Datasource with following properties (omitted password for security)");
-                    logger.info("datasource driver : {}", jdbcDriver);
-                    logger.info("datasource url : {}", jdbcUrl);
-                    logger.info("datasource user name : {}", jdbcUsername);
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info("Configuring Datasource with following properties (omitted password for security)");
+                    LOGGER.info("datasource driver : {}", jdbcDriver);
+                    LOGGER.info("datasource url : {}", jdbcUrl);
+                    LOGGER.info("datasource user name : {}", jdbcUsername);
                 }
 
                 PooledDataSource pooledDataSource = new PooledDataSource(this.getClass().getClassLoader(), jdbcDriver, jdbcUrl, jdbcUsername, jdbcPassword);
@@ -290,22 +319,22 @@ public abstract class AbstractEngineConfiguration {
             connection = dataSource.getConnection();
             DatabaseMetaData databaseMetaData = connection.getMetaData();
             String databaseProductName = databaseMetaData.getDatabaseProductName();
-            logger.debug("database product name: '{}'", databaseProductName);
+            LOGGER.debug("database product name: '{}'", databaseProductName);
             databaseType = databaseTypeMappings.getProperty(databaseProductName);
             if (databaseType == null) {
                 throw new FlowableException("couldn't deduct database type from database product name '" + databaseProductName + "'");
             }
-            logger.debug("using database type: {}", databaseType);
+            LOGGER.debug("using database type: {}", databaseType);
 
         } catch (SQLException e) {
-            logger.error("Exception while initializing Database connection", e);
+            LOGGER.error("Exception while initializing Database connection", e);
         } finally {
             try {
                 if (connection != null) {
                     connection.close();
                 }
             } catch (SQLException e) {
-                logger.error("Exception while closing the Database connection", e);
+                LOGGER.error("Exception while closing the Database connection", e);
             }
         }
     }
@@ -327,10 +356,30 @@ public abstract class AbstractEngineConfiguration {
             schemaCommandConfig = new CommandConfig().transactionNotSupported();
         }
     }
+    
+    public void initCommandExecutor() {
+        if (commandExecutor == null) {
+            CommandInterceptor first = initInterceptorChain(commandInterceptors);
+            commandExecutor = new CommandExecutorImpl(getDefaultCommandConfig(), first);
+        }
+    }
+    
+    public CommandInterceptor initInterceptorChain(List<CommandInterceptor> chain) {
+        if (chain == null || chain.isEmpty()) {
+            throw new FlowableException("invalid command interceptor chain configuration: " + chain);
+        }
+        for (int i = 0; i < chain.size() - 1; i++) {
+            chain.get(i).setNext(chain.get(i + 1));
+        }
+        return chain.get(0);
+    }
+    
+    public abstract CommandInterceptor createTransactionInterceptor();
+
 
     public void initBeans() {
         if (beans == null) {
-            beans = new HashMap<Object, Object>();
+            beans = new HashMap<>();
         }
     }
 
@@ -388,7 +437,6 @@ public abstract class AbstractEngineConfiguration {
                 properties.put("limitBetween", "");
                 properties.put("limitOuterJoinBetween", "");
                 properties.put("limitBeforeNativeQuery", "");
-                properties.put("orderBy", "order by ${orderByColumns}");
                 properties.put("blobType", "BLOB");
                 properties.put("boolValue", "TRUE");
 
@@ -407,7 +455,9 @@ public abstract class AbstractEngineConfiguration {
         }
     }
 
-    public abstract String pathToEngineDbProperties();
+    public String pathToEngineDbProperties() {
+        return "org/flowable/db/properties/" + databaseType + ".properties";
+    }
 
     public Configuration initMybatisConfiguration(Environment environment, Reader reader, Properties properties) {
         XMLConfigBuilder parser = new XMLConfigBuilder(reader, "", properties);
@@ -421,7 +471,7 @@ public abstract class AbstractEngineConfiguration {
 
         initCustomMybatisMappers(configuration);
 
-        configuration = parseMybatisConfiguration(configuration, parser);
+        configuration = parseMybatisConfiguration(parser);
         return configuration;
     }
 
@@ -433,19 +483,45 @@ public abstract class AbstractEngineConfiguration {
         }
     }
 
-    public Configuration parseMybatisConfiguration(Configuration configuration, XMLConfigBuilder parser) {
-        return parseCustomMybatisXMLMappers(parser.parse());
-    }
-
-    public Configuration parseCustomMybatisXMLMappers(Configuration configuration) {
-        if (getCustomMybatisXMLMappers() != null) {
-            // see XMLConfigBuilder.mapperElement()
-            for (String resource : getCustomMybatisXMLMappers()) {
-                XMLMapperBuilder mapperParser = new XMLMapperBuilder(getResourceAsStream(resource), configuration, resource, configuration.getSqlFragments());
-                mapperParser.parse();
+    public Configuration parseMybatisConfiguration(XMLConfigBuilder parser) {
+        Configuration configuration = parser.parse();
+        
+        if (dependentEngineMybatisTypeAliasConfigs != null) {
+            for (CustomMybatisTypeAliasConfig typeAliasConfig : dependentEngineMybatisTypeAliasConfigs) {
+                configuration.getTypeAliasRegistry().registerAlias(typeAliasConfig.getAliasName(), typeAliasConfig.getTypeHandlerClass());
             }
         }
+        if (dependentEngineMybatisTypeHandlerConfigs != null) {
+            for (CustomMyBatisTypeHandlerConfig typeHandlerConfig : dependentEngineMybatisTypeHandlerConfigs) {
+                configuration.getTypeHandlerRegistry().register(typeHandlerConfig.getJavaTypeClass(), typeHandlerConfig.getJdbcType(), typeHandlerConfig.getTypeHandlerClass());
+            }
+        }
+        
+        parseDependentEngineMybatisXMLMappers(configuration);
+        parseCustomMybatisXMLMappers(configuration);
         return configuration;
+    }
+
+    public void parseCustomMybatisXMLMappers(Configuration configuration) {
+        if (getCustomMybatisXMLMappers() != null) {
+            for (String resource : getCustomMybatisXMLMappers()) {
+                parseMybatisXmlMapping(configuration, resource);
+            }
+        }
+    }
+    
+    public void parseDependentEngineMybatisXMLMappers(Configuration configuration) {
+        if (getDependentEngineMyBatisXmlMappers() != null) {
+            for (String resource : getDependentEngineMyBatisXmlMappers()) {
+                parseMybatisXmlMapping(configuration, resource);
+            }
+        }
+    }
+
+    protected void parseMybatisXmlMapping(Configuration configuration, String resource) {
+        // see XMLConfigBuilder.mapperElement()
+        XMLMapperBuilder mapperParser = new XMLMapperBuilder(getResourceAsStream(resource), configuration, resource, configuration.getSqlFragments());
+        mapperParser.parse();
     }
 
     protected InputStream getResourceAsStream(String resource) {
@@ -492,6 +568,15 @@ public abstract class AbstractEngineConfiguration {
 
     public AbstractEngineConfiguration setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
+        return this;
+    }
+    
+    public DbSchemaManager getDbSchemaManager() {
+        return dbSchemaManager;
+    }
+
+    public AbstractEngineConfiguration setDbSchemaManager(DbSchemaManager dbSchemaManager) {
+        this.dbSchemaManager = dbSchemaManager;
         return this;
     }
 
@@ -665,6 +750,84 @@ public abstract class AbstractEngineConfiguration {
         this.defaultCommandConfig = defaultCommandConfig;
         return this;
     }
+    
+    public CommandExecutor getCommandExecutor() {
+        return commandExecutor;
+    }
+
+    public AbstractEngineConfiguration setCommandExecutor(CommandExecutor commandExecutor) {
+        this.commandExecutor = commandExecutor;
+        return this;
+    }
+    
+    public CommandContextFactory getCommandContextFactory() {
+        return commandContextFactory;
+    }
+
+    public AbstractEngineConfiguration setCommandContextFactory(CommandContextFactory commandContextFactory) {
+        this.commandContextFactory = commandContextFactory;
+        return this;
+    }
+    
+    public CommandInterceptor getCommandInvoker() {
+        return commandInvoker;
+    }
+
+    public AbstractEngineConfiguration setCommandInvoker(CommandInterceptor commandInvoker) {
+        this.commandInvoker = commandInvoker;
+        return this;
+    }
+    
+    public List<CommandInterceptor> getCustomPreCommandInterceptors() {
+        return customPreCommandInterceptors;
+    }
+
+    public AbstractEngineConfiguration setCustomPreCommandInterceptors(List<CommandInterceptor> customPreCommandInterceptors) {
+        this.customPreCommandInterceptors = customPreCommandInterceptors;
+        return this;
+    }
+
+    public List<CommandInterceptor> getCustomPostCommandInterceptors() {
+        return customPostCommandInterceptors;
+    }
+
+    public AbstractEngineConfiguration setCustomPostCommandInterceptors(List<CommandInterceptor> customPostCommandInterceptors) {
+        this.customPostCommandInterceptors = customPostCommandInterceptors;
+        return this;
+    }
+
+    public List<CommandInterceptor> getCommandInterceptors() {
+        return commandInterceptors;
+    }
+
+    public AbstractEngineConfiguration setCommandInterceptors(List<CommandInterceptor> commandInterceptors) {
+        this.commandInterceptors = commandInterceptors;
+        return this;
+    }
+    
+    public Map<String, AbstractEngineConfiguration> getEngineConfigurations() {
+        return engineConfigurations;
+    }
+
+    public AbstractEngineConfiguration setEngineConfigurations(Map<String, AbstractEngineConfiguration> engineConfigurations) {
+        this.engineConfigurations = engineConfigurations;
+        return this;
+    }
+    
+    public void addEngineConfiguration(String key, AbstractEngineConfiguration engineConfiguration) {
+        if (engineConfigurations == null) {
+            engineConfigurations = new HashMap<>();
+        }
+        engineConfigurations.put(key, engineConfiguration);
+    }
+
+    public Collection<? extends CommandInterceptor> getDefaultCommandInterceptors() {
+        return defaultCommandInterceptors;
+    }
+
+    public void setDefaultCommandInterceptors(Collection<? extends CommandInterceptor> defaultCommandInterceptors) {
+        this.defaultCommandInterceptors = defaultCommandInterceptors;
+    }
 
     public SqlSessionFactory getSqlSessionFactory() {
         return sqlSessionFactory;
@@ -674,6 +837,15 @@ public abstract class AbstractEngineConfiguration {
         this.sqlSessionFactory = sqlSessionFactory;
         return this;
     }
+    
+    public DbSqlSessionFactory getDbSqlSessionFactory() {
+        return dbSqlSessionFactory;
+    }
+
+    public AbstractEngineConfiguration setDbSqlSessionFactory(DbSqlSessionFactory dbSqlSessionFactory) {
+        this.dbSqlSessionFactory = dbSqlSessionFactory;
+        return this;
+    }
 
     public TransactionFactory getTransactionFactory() {
         return transactionFactory;
@@ -681,6 +853,15 @@ public abstract class AbstractEngineConfiguration {
 
     public AbstractEngineConfiguration setTransactionFactory(TransactionFactory transactionFactory) {
         this.transactionFactory = transactionFactory;
+        return this;
+    }
+    
+    public TransactionContextFactory getTransactionContextFactory() {
+        return transactionContextFactory;
+    }
+
+    public AbstractEngineConfiguration setTransactionContextFactory(TransactionContextFactory transactionContextFactory) {
+        this.transactionContextFactory = transactionContextFactory;
         return this;
     }
 
@@ -699,6 +880,33 @@ public abstract class AbstractEngineConfiguration {
 
     public AbstractEngineConfiguration setCustomMybatisXMLMappers(Set<String> customMybatisXMLMappers) {
         this.customMybatisXMLMappers = customMybatisXMLMappers;
+        return this;
+    }
+    
+    public Set<String> getDependentEngineMyBatisXmlMappers() {
+        return dependentEngineMyBatisXmlMappers;
+    }
+
+    public AbstractEngineConfiguration setDependentEngineMyBatisXmlMappers(Set<String> dependentEngineMyBatisXmlMappers) {
+        this.dependentEngineMyBatisXmlMappers = dependentEngineMyBatisXmlMappers;
+        return this;
+    }
+
+    public List<CustomMybatisTypeAliasConfig> getDependentEngineMybatisTypeAliasConfigs() {
+        return dependentEngineMybatisTypeAliasConfigs;
+    }
+
+    public AbstractEngineConfiguration setDependentEngineMybatisTypeAliasConfigs(List<CustomMybatisTypeAliasConfig> dependentEngineMybatisTypeAliasConfigs) {
+        this.dependentEngineMybatisTypeAliasConfigs = dependentEngineMybatisTypeAliasConfigs;
+        return this;
+    }
+
+    public List<CustomMyBatisTypeHandlerConfig> getDependentEngineMybatisTypeHandlerConfigs() {
+        return dependentEngineMybatisTypeHandlerConfigs;
+    }
+
+    public AbstractEngineConfiguration setDependentEngineMybatisTypeHandlerConfigs(List<CustomMyBatisTypeHandlerConfig> dependentEngineMybatisTypeHandlerConfigs) {
+        this.dependentEngineMybatisTypeHandlerConfigs = dependentEngineMybatisTypeHandlerConfigs;
         return this;
     }
 
@@ -816,6 +1024,15 @@ public abstract class AbstractEngineConfiguration {
 
     public AbstractEngineConfiguration setTypedEventListeners(Map<String, List<FlowableEventListener>> typedEventListeners) {
         this.typedEventListeners = typedEventListeners;
+        return this;
+    }
+    
+    public List<EventDispatchAction> getAdditionalEventDispatchActions() {
+        return additionalEventDispatchActions;
+    }
+
+    public AbstractEngineConfiguration setAdditionalEventDispatchActions(List<EventDispatchAction> additionalEventDispatchActions) {
+        this.additionalEventDispatchActions = additionalEventDispatchActions;
         return this;
     }
 

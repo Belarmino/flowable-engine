@@ -12,6 +12,9 @@
  */
 package org.flowable.engine.test.api.event;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,15 +25,13 @@ import org.flowable.engine.delegate.event.FlowableEngineEventType;
 import org.flowable.engine.delegate.event.FlowableVariableEvent;
 import org.flowable.engine.impl.history.HistoryLevel;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.task.Task;
 import org.flowable.engine.test.Deployment;
 import org.hamcrest.CoreMatchers;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 
 /**
  * Test case for all {@link FlowableEvent}s related to variables.
@@ -91,7 +92,7 @@ public class VariableEventsTest extends PluggableFlowableTestCase {
         listener.clearEventsReceived();
 
         // Create, update and delete multiple variables
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("test", 123);
         vars.put("test2", 456);
         runtimeService.setVariables(processInstance.getId(), vars);
@@ -114,7 +115,7 @@ public class VariableEventsTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/runtime/oneTaskProcess.bpmn20.xml" })
     public void testStartEndProcessInstanceVariableEvents() throws Exception {
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put("var1", "value1");
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("oneTaskProcess", variables);
 
@@ -134,7 +135,7 @@ public class VariableEventsTest extends PluggableFlowableTestCase {
     @Deployment(resources = { "org/flowable/engine/test/api/runtime/oneTaskProcess.bpmn20.xml" })
     public void testProcessInstanceVariableEventsOnStart() throws Exception {
 
-        HashMap<String, Object> vars = new HashMap<String, Object>();
+        HashMap<String, Object> vars = new HashMap<>();
         vars.put("testVariable", "The value");
 
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("oneTaskProcess", vars);
@@ -182,24 +183,58 @@ public class VariableEventsTest extends PluggableFlowableTestCase {
         assertNotNull(processInstance);
 
         assertEquals(6, listener.getEventsReceived().size());
-        FlowableVariableEvent event = (FlowableVariableEvent) listener.getEventsReceived().get(0);
-        assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_CREATED));
-        assertThat(event.getVariableName(), is("parentVar1"));
-        event = (FlowableVariableEvent) listener.getEventsReceived().get(1);
-        assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_CREATED));
-        assertThat(event.getVariableName(), is("subVar1"));
-        event = (FlowableVariableEvent) listener.getEventsReceived().get(2);
-        assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_CREATED));
-        assertThat(event.getVariableName(), is("parentVar2"));
-        event = (FlowableVariableEvent) listener.getEventsReceived().get(3);
-        assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_DELETED));
-        assertThat(event.getVariableName(), is("subVar1"));
-        event = (FlowableVariableEvent) listener.getEventsReceived().get(4);
-        assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_DELETED));
-        assertThat(event.getVariableName(), is("parentVar2"));
-        event = (FlowableVariableEvent) listener.getEventsReceived().get(5);
-        assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_DELETED));
-        assertThat(event.getVariableName(), is("parentVar1"));
+        int nrOfCreated = 0;
+        int nrOfDeleted = 0;
+        for (int i = 0; i < listener.getEventsReceived().size(); i++) {
+            FlowableVariableEvent event = (FlowableVariableEvent) listener.getEventsReceived().get(i);
+            if (event.getType() == FlowableEngineEventType.VARIABLE_CREATED) {
+                
+                nrOfCreated++;
+                
+                if (event.getVariableName().equals("parentVar1")) {
+                    assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_CREATED));
+                    assertThat(event.getVariableName(), is("parentVar1"));
+                    
+                } else if (event.getVariableName().equals("subVar1")) {
+                    assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_CREATED));
+                    assertThat(event.getVariableName(), is("subVar1"));
+                    
+                } else if (event.getVariableName().equals("parentVar2")) {
+                    assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_CREATED));
+                    assertThat(event.getVariableName(), is("parentVar2"));
+                    
+                } else {
+                    fail("Unknown variable name " + event.getVariableName());
+                }
+                
+            } else if (event.getType() == FlowableEngineEventType.VARIABLE_DELETED) {
+                
+                nrOfDeleted++;
+                
+                if (event.getVariableName().equals("parentVar1")) {
+                    assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_DELETED));
+                    assertThat(event.getVariableName(), is("parentVar1"));
+                    
+                } else if (event.getVariableName().equals("subVar1")) {
+                    assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_DELETED));
+                    assertThat(event.getVariableName(), is("subVar1"));
+                    
+                } else if (event.getVariableName().equals("parentVar2")) {
+                    assertThat(event.getType(), CoreMatchers.<FlowableEventType>is(FlowableEngineEventType.VARIABLE_DELETED));
+                    assertThat(event.getVariableName(), is("parentVar2"));
+                    
+                } else {
+                    fail("Unknown variable name " + event.getVariableName());
+                }
+                
+            } else {
+                fail("Unknown event type " + event.getType());
+            }
+            
+        }
+        
+        assertEquals(3, nrOfCreated);
+        assertEquals(3, nrOfDeleted);
     }
 
     /**
@@ -341,6 +376,9 @@ public class VariableEventsTest extends PluggableFlowableTestCase {
 
             taskService.setVariable(newTask.getId(), "testVariable", 123);
             taskService.setVariable(newTask.getId(), "testVariable", 456);
+            
+            waitForJobExecutorToProcessAllHistoryJobs(5000, 200);
+            
             taskService.removeVariable(newTask.getId(), "testVariable");
 
             assertEquals(3, listener.getEventsReceived().size());
@@ -373,11 +411,10 @@ public class VariableEventsTest extends PluggableFlowableTestCase {
             assertNull(event.getVariableValue());
         } finally {
 
-            // Cleanup task and history to ensure a clean DB after test
-            // success/failure
+            // Cleanup task and history to ensure a clean DB after test success/failure
             if (newTask.getId() != null) {
                 taskService.deleteTask(newTask.getId());
-                if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+                if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
                     historyService.deleteHistoricTaskInstance(newTask.getId());
                 }
             }
@@ -388,7 +425,7 @@ public class VariableEventsTest extends PluggableFlowableTestCase {
     @Deployment(resources = { "org/flowable/engine/test/api/runtime/processVariableEvent.bpmn20.xml" })
     public void testProcessInstanceVariableEventsForModeledDataObjectOnStart() throws Exception {
 
-        HashMap<String, Object> vars = new HashMap<String, Object>();
+        HashMap<String, Object> vars = new HashMap<>();
         vars.put("var2", "The value");
 
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("processVariableEvent", vars);

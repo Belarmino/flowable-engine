@@ -405,10 +405,17 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
         assertEquals("No task can be active for deleted process.", 0, this.taskService.createTaskQuery().processInstanceId(processInstance.getId()).count());
 
         List<FlowableEvent> taskCancelledEvents = listener.filterEvents(FlowableEngineEventType.ACTIVITY_CANCELLED);
-        assertEquals("ActivitiEventType.ACTIVITY_CANCELLED was expected 1 time.", 1, taskCancelledEvents.size());
+        assertEquals("ActivitiEventType.ACTIVITY_CANCELLED was expected 2 times.", 2, taskCancelledEvents.size());
+        
         FlowableActivityCancelledEvent activityCancelledEvent = (FlowableActivityCancelledEvent) taskCancelledEvents.get(0);
         assertTrue("The cause has to be the same as deleteProcessInstance method call", FlowableActivityCancelledEvent.class.isAssignableFrom(activityCancelledEvent.getClass()));
         assertEquals("The process instance has to point to the subprocess", subProcess.getId(), activityCancelledEvent.getProcessInstanceId());
+        assertEquals("The cause has to be the same as in deleteProcessInstance method call", "delete_test", activityCancelledEvent.getCause());
+        
+        activityCancelledEvent = (FlowableActivityCancelledEvent) taskCancelledEvents.get(1);
+        assertTrue("The cause has to be the same as deleteProcessInstance method call", FlowableActivityCancelledEvent.class.isAssignableFrom(activityCancelledEvent.getClass()));
+        assertEquals("The process instance has to point to the main process", processInstance.getId(), activityCancelledEvent.getProcessInstanceId());
+        assertEquals("expect callActivity type", "callActivity", activityCancelledEvent.getActivityType());
         assertEquals("The cause has to be the same as in deleteProcessInstance method call", "delete_test", activityCancelledEvent.getCause());
 
         listener.clearEventsReceived();
@@ -458,16 +465,13 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
         assertThat(processCompletedEvent.getProcessInstanceId(), is(pi.getProcessInstanceId()));
 
         List<FlowableEvent> activityTerminatedEvents = listener.filterEvents(FlowableEngineEventType.ACTIVITY_CANCELLED);
-        assertThat("There should be exactly two FlowableEventType.ACTIVITY_CANCELLED event after the task complete.", activityTerminatedEvents.size(), is(2));
+        assertThat("There should be exactly two FlowableEventType.ACTIVITY_CANCELLED event after the task complete.", activityTerminatedEvents.size(), is(1));
 
         for (FlowableEvent event : activityTerminatedEvents) {
 
             FlowableActivityCancelledEventImpl activityEvent = (FlowableActivityCancelledEventImpl) event;
             if (activityEvent.getActivityId().equals("preNormalTerminateTask")) {
                 assertThat("The user task must be terminated", activityEvent.getActivityId(), is("preNormalTerminateTask"));
-                assertThat("The cause must be terminate end event", ((FlowNode) activityEvent.getCause()).getId(), is("EndEvent_2"));
-            } else if (activityEvent.getActivityId().equals("EndEvent_2")) {
-                assertThat("The end event must be terminated", activityEvent.getActivityId(), is("EndEvent_2"));
                 assertThat("The cause must be terminate end event", ((FlowNode) activityEvent.getCause()).getId(), is("EndEvent_2"));
             }
 
@@ -520,14 +524,14 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
 
         assertProcessEnded(pi.getId());
         List<FlowableEvent> processTerminatedEvents = listener.filterEvents(FlowableEngineEventType.PROCESS_COMPLETED_WITH_TERMINATE_END_EVENT);
-        assertEquals("There should be exactly two FlowableEventType.PROCESS_COMPLETED_WITH_TERMINATE_END_EVENT events after the task complete.", 2,
+        assertEquals("There should be exactly one FlowableEventType.PROCESS_COMPLETED_WITH_TERMINATE_END_EVENT events after the task complete.", 1,
                 processTerminatedEvents.size());
-        FlowableEngineEntityEvent processCompletedEvent = (FlowableEngineEntityEvent) processTerminatedEvents.get(1);
+        FlowableEngineEntityEvent processCompletedEvent = (FlowableEngineEntityEvent) processTerminatedEvents.get(0);
         assertThat(processCompletedEvent.getProcessInstanceId(), is(pi.getProcessInstanceId()));
         assertThat(processCompletedEvent.getProcessDefinitionId(), containsString("terminateParentProcess"));
 
         List<FlowableEvent> activityTerminatedEvents = listener.filterEvents(FlowableEngineEventType.ACTIVITY_CANCELLED);
-        assertThat("3 activities must be cancelled.", activityTerminatedEvents.size(), is(3));
+        assertThat("Two activities must be cancelled.", activityTerminatedEvents.size(), is(2));
 
         for (FlowableEvent event : activityTerminatedEvents) {
 
@@ -541,11 +545,6 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
             } else if (activityEvent.getActivityId().equals("CallActivity_1")) {
 
                 assertThat("The call activity must be terminated", activityEvent.getActivityId(), is("CallActivity_1"));
-                assertThat("The cause must be terminate end event", ((FlowNode) activityEvent.getCause()).getId(), is("EndEvent_3"));
-
-            } else if (activityEvent.getActivityId().equals("EndEvent_3")) {
-
-                assertThat("The end event must be terminated", activityEvent.getActivityId(), is("EndEvent_3"));
                 assertThat("The cause must be terminate end event", ((FlowNode) activityEvent.getCause()).getId(), is("EndEvent_3"));
 
             }
@@ -621,17 +620,13 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
         runtimeService.messageEventReceived("cancel", execution.getId());
 
         List<FlowableEvent> activityTerminatedEvents = listener.filterEvents(FlowableEngineEventType.ACTIVITY_CANCELLED);
-        assertEquals(3, activityTerminatedEvents.size());
+        assertEquals(2, activityTerminatedEvents.size());
 
-        boolean endEventFound = false;
         boolean taskFound = false;
         boolean subProcessFound = false;
         for (FlowableEvent terminatedEvent : activityTerminatedEvents) {
             FlowableActivityCancelledEvent activityEvent = (FlowableActivityCancelledEvent) terminatedEvent;
-            if ("endEvent".equals(activityEvent.getActivityType())) {
-                endEventFound = true;
-            
-            } else if ("userTask".equals(activityEvent.getActivityType())) {
+            if ("userTask".equals(activityEvent.getActivityType())) {
                 taskFound = true;
                 assertEquals("task", activityEvent.getActivityId());
             
@@ -641,7 +636,6 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
             }
         }
         
-        assertTrue(endEventFound);
         assertTrue(taskFound);
         assertTrue(subProcessFound);
     }
@@ -677,22 +671,17 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
         // Subprocess2 completed and transitioned to terminate end. We expect
         // ACTIVITY_CANCELLED for Subprocess1, task1 defined in subprocess1, boundary event defined on
         // and the timer intermediate catch event defined in subprocess1
-        boolean endEventFound = false;
         boolean userTaskFound = false;
         boolean subprocessFound = false;
         boolean timerCatchEventFound = false;
         boolean boundaryEventFound = false;
         List<FlowableEvent> activityTerminatedEvents = listener
                 .filterEvents(FlowableEngineEventType.ACTIVITY_CANCELLED);
-        assertEquals(5, activityTerminatedEvents.size());
+        assertEquals(4, activityTerminatedEvents.size());
         for (FlowableEvent flowableEvent: activityTerminatedEvents)
         {
             FlowableActivityCancelledEvent activityCancelledEvent = (FlowableActivityCancelledEvent) flowableEvent;
-            if ("endEvent".equals(activityCancelledEvent.getActivityType())) {
-                assertEquals("End", activityCancelledEvent.getActivityName());
-                endEventFound = true;
-            }
-            else if ("intermediateCatchEvent".equals(activityCancelledEvent.getActivityType())) {
+            if ("intermediateCatchEvent".equals(activityCancelledEvent.getActivityType())) {
                 assertEquals("timer", activityCancelledEvent.getActivityId());
                 timerCatchEventFound = true;
             }
@@ -709,7 +698,6 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
             }
         }
 
-        assertTrue(endEventFound);
         assertTrue(timerCatchEventFound);
         assertTrue(boundaryEventFound);
         assertTrue(userTaskFound);
@@ -751,7 +739,7 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
 
         public TestInitializedEntityEventListener() {
 
-            eventsReceived = new ArrayList<FlowableEvent>();
+            eventsReceived = new ArrayList<>();
         }
 
         public List<FlowableEvent> getEventsReceived() {
@@ -781,7 +769,7 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
 
         public List<FlowableEvent> filterEvents(FlowableEngineEventType eventType) {// count
             // timer cancelled events
-            List<FlowableEvent> filteredEvents = new ArrayList<FlowableEvent>();
+            List<FlowableEvent> filteredEvents = new ArrayList<>();
             List<FlowableEvent> eventsReceived = listener.getEventsReceived();
             for (FlowableEvent eventReceived : eventsReceived) {
                 if (eventType == eventReceived.getType()) {

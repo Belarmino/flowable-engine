@@ -62,12 +62,12 @@ public class AdvancedCycleBusinessCalendar extends CycleBusinessCalendar {
 
     private static final Integer DEFAULT_VERSION = 2;
 
-    private static final Logger logger = LoggerFactory.getLogger(AdvancedCycleBusinessCalendar.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AdvancedCycleBusinessCalendar.class);
 
     private static final Map<Integer, AdvancedSchedulerResolver> resolvers;
 
     static {
-        resolvers = new ConcurrentHashMap<Integer, AdvancedSchedulerResolver>();
+        resolvers = new ConcurrentHashMap<>();
         resolvers.put(1, new AdvancedSchedulerResolverWithoutTimeZone());
         resolvers.put(2, new AdvancedSchedulerResolverWithTimeZone());
     }
@@ -91,7 +91,7 @@ public class AdvancedCycleBusinessCalendar extends CycleBusinessCalendar {
 
     @Override
     public Date resolveDuedate(String duedateDescription, int maxIterations) {
-        logger.info("Resolving Due Date: {}", duedateDescription);
+        LOGGER.info("Resolving Due Date: {}", duedateDescription);
 
         String timeZone = getValueFrom("DSTZONE", duedateDescription);
         String version = getValueFrom("VER", duedateDescription);
@@ -103,12 +103,12 @@ public class AdvancedCycleBusinessCalendar extends CycleBusinessCalendar {
         duedateDescription = removeValueFrom("VER", removeValueFrom("START", removeValueFrom("DSTZONE", duedateDescription))).trim();
 
         try {
-            logger.info("Base Due Date: {}", duedateDescription);
+            LOGGER.info("Base Due Date: {}", duedateDescription);
 
             Date date = resolvers.get(version == null ? getDefaultScheduleVersion() : Integer.valueOf(version)).resolve(duedateDescription, clockReader,
                     timeZone == null ? clockReader.getCurrentTimeZone() : TimeZone.getTimeZone(timeZone));
 
-            logger.info("Calculated Date: {}", date == null ? "Will Not Run Again" : date);
+            LOGGER.info("Calculated Date: {}", date == null ? "Will Not Run Again" : date);
 
             return date;
 

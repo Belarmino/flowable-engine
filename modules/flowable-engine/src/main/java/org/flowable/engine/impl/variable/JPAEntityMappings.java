@@ -24,8 +24,8 @@ import javax.persistence.EntityManager;
 
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.util.ReflectUtil;
+import org.flowable.engine.common.impl.context.Context;
+import org.flowable.engine.common.impl.util.ReflectUtil;
 
 /**
  * @author Frederik Heremans
@@ -37,7 +37,7 @@ public class JPAEntityMappings {
     private JPAEntityScanner enitityScanner;
 
     public JPAEntityMappings() {
-        classMetaDatamap = new HashMap<String, EntityMetaData>();
+        classMetaDatamap = new HashMap<>();
         enitityScanner = new JPAEntityScanner();
     }
 

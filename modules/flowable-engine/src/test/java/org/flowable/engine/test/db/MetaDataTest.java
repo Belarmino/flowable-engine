@@ -17,10 +17,11 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 
 import org.apache.ibatis.session.SqlSession;
+import org.flowable.engine.common.impl.interceptor.Command;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.ProcessEngineImpl;
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MetaDataTest extends PluggableFlowableTestCase {
 
-    private static Logger log = LoggerFactory.getLogger(MetaDataTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaDataTest.class);
 
     public void testMetaData() {
         ((ProcessEngineImpl) processEngine).getProcessEngineConfiguration().getCommandExecutor().execute(new Command<Object>() {
@@ -39,15 +40,15 @@ public class MetaDataTest extends PluggableFlowableTestCase {
                 // INFRASTRUCTURE TO SEE IF METADATA
                 // CAN BE USED INSTEAD OF PERFORMING A QUERY THAT MIGHT FAIL
                 try {
-                    SqlSession sqlSession = commandContext.getDbSqlSession().getSqlSession();
+                    SqlSession sqlSession = CommandContextUtil.getDbSqlSession(commandContext).getSqlSession();
                     ResultSet tables = sqlSession.getConnection().getMetaData().getTables(null, null, null, null);
                     while (tables.next()) {
                         ResultSetMetaData resultSetMetaData = tables.getMetaData();
                         int columnCount = resultSetMetaData.getColumnCount();
                         for (int i = 1; i <= columnCount; i++) {
-                            log.info("result set column {}|{}|{}|{}", i, resultSetMetaData.getColumnName(i), resultSetMetaData.getColumnLabel(i), tables.getString(i));
+                            LOGGER.info("result set column {}|{}|{}|{}", i, resultSetMetaData.getColumnName(i), resultSetMetaData.getColumnLabel(i), tables.getString(i));
                         }
-                        log.info("-------------------------------------------------------");
+                        LOGGER.info("-------------------------------------------------------");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

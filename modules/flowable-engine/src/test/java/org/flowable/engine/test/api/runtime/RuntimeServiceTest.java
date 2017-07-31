@@ -35,6 +35,7 @@ import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.history.HistoricTaskInstance;
 import org.flowable.engine.impl.history.HistoryLevel;
 import org.flowable.engine.impl.persistence.entity.HistoricDetailVariableInstanceUpdateEntity;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.Execution;
@@ -51,7 +52,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testStartProcessInstanceWithVariables() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("basicType", new DummySerializable());
         runtimeService.startProcessInstanceByKey("oneTaskProcess", vars);
         Task task = taskService.createTaskQuery().includeProcessVariables().singleResult();
@@ -60,7 +61,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testStartProcessInstanceWithLongStringVariable() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         StringBuilder longString = new StringBuilder();
         for (int i = 0; i < 4001; i++) {
             longString.append("c");
@@ -202,7 +203,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testStartProcessInstanceFormWithoutFormKey() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("basicType", new DummySerializable());
 
         ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().singleResult();
@@ -238,7 +239,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
         // test that the delete reason of the process instance shows up as
         // delete reason of the task in history
         // ACT-848
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
 
             HistoricTaskInstance historicTaskInstance = historyService.createHistoricTaskInstanceQuery().processInstanceId(processInstance.getId()).singleResult();
 
@@ -261,7 +262,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
         runtimeService.deleteProcessInstance(processInstance.getId(), null);
         assertEquals(0, runtimeService.createProcessInstanceQuery().processDefinitionKey("oneTaskProcess").count());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricProcessInstance historicInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstance.getId()).singleResult();
 
             assertNotNull(historicInstance);
@@ -418,7 +419,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
     public void testSignalWithProcessVariables() {
 
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("testSignalWithProcessVariables");
-        Map<String, Object> processVariables = new HashMap<String, Object>();
+        Map<String, Object> processVariables = new HashMap<>();
         processVariables.put("variable", "value");
 
         // signal the execution while passing in the variables
@@ -507,7 +508,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testSetVariables() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("variable1", "value1");
         vars.put("variable2", "value2");
 
@@ -540,7 +541,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
     }
 
     private void checkHistoricVariableUpdateEntity(String variableName, String processInstanceId) {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.FULL)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.FULL, processEngineConfiguration)) {
             boolean deletedVariableUpdateFound = false;
 
             List<HistoricDetail> resultSet = historyService.createHistoricDetailQuery().processInstanceId(processInstanceId).list();
@@ -565,7 +566,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testRemoveVariable() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("variable1", "value1");
         vars.put("variable2", "value2");
 
@@ -583,7 +584,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneSubProcess.bpmn20.xml" })
     public void testRemoveVariableInParentScope() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("variable1", "value1");
         vars.put("variable2", "value2");
 
@@ -609,7 +610,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testRemoveVariableLocal() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("variable1", "value1");
         vars.put("variable2", "value2");
 
@@ -625,7 +626,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneSubProcess.bpmn20.xml" })
     public void testRemoveVariableLocalWithParentScope() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("variable1", "value1");
         vars.put("variable2", "value2");
 
@@ -660,7 +661,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testRemoveVariables() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("variable1", "value1");
         vars.put("variable2", "value2");
 
@@ -683,7 +684,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneSubProcess.bpmn20.xml" })
     public void testRemoveVariablesWithParentScope() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("variable1", "value1");
         vars.put("variable2", "value2");
 
@@ -723,14 +724,14 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneSubProcess.bpmn20.xml" })
     public void testRemoveVariablesLocalWithParentScope() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("variable1", "value1");
         vars.put("variable2", "value2");
 
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("startSimpleSubProcess", vars);
 
         Task currentTask = taskService.createTaskQuery().singleResult();
-        Map<String, Object> varsToDelete = new HashMap<String, Object>();
+        Map<String, Object> varsToDelete = new HashMap<>();
         varsToDelete.put("variable3", "value3");
         varsToDelete.put("variable4", "value4");
         varsToDelete.put("variable5", "value5");
@@ -931,7 +932,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testGetVariableExistingVariableNameWithCast() {
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("var1", true);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("oneTaskProcess", params);
         Boolean variableValue = runtimeService.getVariable(processInstance.getId(), "var1", Boolean.class);
@@ -940,7 +941,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testGetVariableExistingVariableNameWithInvalidCast() {
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("var1", true);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("oneTaskProcess", params);
         catchException(runtimeService).getVariable(processInstance.getId(), "var1", String.class);
@@ -958,7 +959,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testGetVariableLocalExistingVariableNameWithCast() {
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("var1", true);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("oneTaskProcess", params);
         Boolean variableValue = runtimeService.getVariableLocal(processInstance.getId(), "var1", Boolean.class);
@@ -967,7 +968,7 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testGetVariableLocalExistingVariableNameWithInvalidCast() {
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("var1", true);
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("oneTaskProcess", params);
         catchException(runtimeService).getVariableLocal(processInstance.getId(), "var1", String.class);
@@ -979,8 +980,8 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
     // Test for https://activiti.atlassian.net/browse/ACT-2186
     @Deployment(resources = { "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml" })
     public void testHistoricVariableRemovedWhenRuntimeVariableIsRemoved() {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
-            Map<String, Object> vars = new HashMap<String, Object>();
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
+            Map<String, Object> vars = new HashMap<>();
             vars.put("var1", "Hello");
             vars.put("var2", "World");
             vars.put("var3", "!");
@@ -990,6 +991,8 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
             assertEquals(3, runtimeService.getVariables(processInstance.getId()).size());
             assertEquals(3, runtimeService.getVariables(processInstance.getId(), Arrays.asList("var1", "var2", "var3")).size());
             assertNotNull(runtimeService.getVariable(processInstance.getId(), "var2"));
+            
+            waitForHistoryJobExecutorToProcessAllJobs(5000, 100);
 
             // Verify history
             assertEquals(3, historyService.createHistoricVariableInstanceQuery().list().size());
@@ -997,6 +1000,8 @@ public class RuntimeServiceTest extends PluggableFlowableTestCase {
 
             // Remove one variable
             runtimeService.removeVariable(processInstance.getId(), "var2");
+            
+            waitForHistoryJobExecutorToProcessAllJobs(5000, 100);
 
             // Verify runtime
             assertEquals(2, runtimeService.getVariables(processInstance.getId()).size());

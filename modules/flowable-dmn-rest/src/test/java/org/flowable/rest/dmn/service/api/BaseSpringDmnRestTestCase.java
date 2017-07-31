@@ -40,6 +40,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.eclipse.jetty.server.Server;
+import org.flowable.dmn.api.DmnHistoryService;
 import org.flowable.dmn.api.DmnRepositoryService;
 import org.flowable.dmn.api.DmnRuleService;
 import org.flowable.dmn.engine.DmnEngine;
@@ -64,7 +65,7 @@ import junit.framework.AssertionFailedError;
 
 public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
 
-    private static Logger log = LoggerFactory.getLogger(BaseSpringDmnRestTestCase.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseSpringDmnRestTestCase.class);
 
     protected static String SERVER_URL_PREFIX;
     protected static DmnRestUrlBuilder URL_BUILDER;
@@ -81,9 +82,10 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
     protected static DmnEngineConfiguration dmnEngineConfiguration;
     protected static DmnRepositoryService dmnRepositoryService;
     protected static DmnRuleService dmnRuleService;
+    protected static DmnHistoryService dmnHistoryService;
 
     protected static CloseableHttpClient client;
-    protected static LinkedList<CloseableHttpResponse> httpResponses = new LinkedList<CloseableHttpResponse>();
+    protected static LinkedList<CloseableHttpResponse> httpResponses = new LinkedList<>();
 
     static {
 
@@ -98,6 +100,7 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
         dmnEngineConfiguration = appContext.getBean(DmnEngineConfiguration.class);
         dmnRepositoryService = dmnEngineConfiguration.getDmnRepositoryService();
         dmnRuleService = dmnEngineConfiguration.getDmnRuleService();
+        dmnHistoryService = dmnEngineConfiguration.getDmnHistoryService();
 
         // Create http client for all tests
         CredentialsProvider provider = new BasicCredentialsProvider();
@@ -115,7 +118,7 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
                     try {
                         client.close();
                     } catch (IOException e) {
-                        log.error("Could not close http client", e);
+                        LOGGER.error("Could not close http client", e);
                     }
                 }
 
@@ -123,7 +126,7 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
                     try {
                         server.stop();
                     } catch (Exception e) {
-                        log.error("Error stopping server", e);
+                        LOGGER.error("Error stopping server", e);
                     }
                 }
             }
@@ -137,14 +140,14 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
 
             super.runBare();
         } catch (AssertionFailedError e) {
-            log.error(EMPTY_LINE);
-            log.error("ASSERTION FAILED: {}", e, e);
+            LOGGER.error(EMPTY_LINE);
+            LOGGER.error("ASSERTION FAILED: {}", e, e);
             exception = e;
             throw e;
 
         } catch (Throwable e) {
-            log.error(EMPTY_LINE);
-            log.error("EXCEPTION: {}", e, e);
+            LOGGER.error(EMPTY_LINE);
+            LOGGER.error("EXCEPTION: {}", e, e);
             exception = e;
             throw e;
 
@@ -182,8 +185,8 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
 
             int responseStatusCode = response.getStatusLine().getStatusCode();
             if (expectedStatusCode != responseStatusCode) {
-                log.info("Wrong status code : {}, but should be {}", responseStatusCode, expectedStatusCode);
-                log.info("Response body: {}", IOUtils.toString(response.getEntity().getContent()));
+                LOGGER.info("Wrong status code : {}, but should be {}", responseStatusCode, expectedStatusCode);
+                LOGGER.info("Response body: {}", IOUtils.toString(response.getEntity().getContent()));
             }
 
             Assert.assertEquals(expectedStatusCode, responseStatusCode);
@@ -214,7 +217,7 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
                 try {
                     response.close();
                 } catch (IOException e) {
-                    log.error("Could not close http connection", e);
+                    LOGGER.error("Could not close http connection", e);
                 }
             }
         }
@@ -247,7 +250,7 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
         assertEquals(numberOfResultsExpected, dataNode.size());
 
         // Check presence of ID's
-        List<String> toBeFound = new ArrayList<String>(Arrays.asList(expectedResourceIds));
+        List<String> toBeFound = new ArrayList<>(Arrays.asList(expectedResourceIds));
         Iterator<JsonNode> it = dataNode.iterator();
         while (it.hasNext()) {
             String id = it.next().get("id").textValue();
@@ -275,7 +278,7 @@ public abstract class BaseSpringDmnRestTestCase extends AbstractDmnTestCase {
 
             // Check presence of ID's
             if (expectedResourceIds != null) {
-                List<String> toBeFound = new ArrayList<String>(Arrays.asList(expectedResourceIds));
+                List<String> toBeFound = new ArrayList<>(Arrays.asList(expectedResourceIds));
                 Iterator<JsonNode> it = dataNode.iterator();
                 while (it.hasNext()) {
                     String id = it.next().get("id").textValue();

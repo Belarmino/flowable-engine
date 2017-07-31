@@ -21,6 +21,7 @@ import org.flowable.engine.delegate.event.FlowableActivityCancelledEvent;
 import org.flowable.engine.delegate.event.FlowableActivityEvent;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -61,13 +62,13 @@ public class Flowable6ExecutionTest extends PluggableFlowableTestCase {
 
         taskService.complete(task.getId());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             List<HistoricActivityInstance> historicActivities = historyService.createHistoricActivityInstanceQuery()
                     .processInstanceId(processInstance.getId())
                     .list();
             assertEquals(3, historicActivities.size());
 
-            List<String> activityIds = new ArrayList<String>();
+            List<String> activityIds = new ArrayList<>();
             activityIds.add("theStart");
             activityIds.add("theTask");
             activityIds.add("theEnd");
@@ -142,13 +143,13 @@ public class Flowable6ExecutionTest extends PluggableFlowableTestCase {
 
         assertProcessEnded(processInstance.getId());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             List<HistoricActivityInstance> historicActivities = historyService.createHistoricActivityInstanceQuery()
                     .processInstanceId(processInstance.getId())
                     .list();
             assertEquals(8, historicActivities.size());
 
-            List<String> activityIds = new ArrayList<String>();
+            List<String> activityIds = new ArrayList<>();
             activityIds.add("theStart");
             activityIds.add("theTask1");
             activityIds.add("subProcess");
@@ -248,13 +249,13 @@ public class Flowable6ExecutionTest extends PluggableFlowableTestCase {
 
         assertProcessEnded(processInstance.getId());
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             List<HistoricActivityInstance> historicActivities = historyService.createHistoricActivityInstanceQuery()
                     .processInstanceId(processInstance.getId())
                     .list();
             assertEquals(8, historicActivities.size());
 
-            List<String> activityIds = new ArrayList<String>();
+            List<String> activityIds = new ArrayList<>();
             activityIds.add("theStart");
             activityIds.add("theTask1");
             activityIds.add("subProcess");
@@ -333,7 +334,7 @@ public class Flowable6ExecutionTest extends PluggableFlowableTestCase {
         private List<FlowableEvent> eventsReceived;
 
         public SubProcessEventListener() {
-            eventsReceived = new ArrayList<FlowableEvent>();
+            eventsReceived = new ArrayList<>();
         }
 
         public List<FlowableEvent> getEventsReceived() {

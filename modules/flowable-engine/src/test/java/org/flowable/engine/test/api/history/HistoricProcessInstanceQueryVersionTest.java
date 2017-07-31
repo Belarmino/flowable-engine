@@ -1,3 +1,15 @@
+/* Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.flowable.engine.test.api.history;
 
 import java.util.HashMap;
@@ -5,6 +17,7 @@ import java.util.Map;
 
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 
 public class HistoricProcessInstanceQueryVersionTest extends PluggableFlowableTestCase {
@@ -12,31 +25,29 @@ public class HistoricProcessInstanceQueryVersionTest extends PluggableFlowableTe
     private static final String PROCESS_DEFINITION_KEY = "oneTaskProcess";
     private static final String DEPLOYMENT_FILE_PATH = "org/flowable/engine/test/api/oneTaskProcess.bpmn20.xml";
 
-    private org.flowable.engine.repository.Deployment oldDeployment;
-    private org.flowable.engine.repository.Deployment newDeployment;
-
     protected void setUp() throws Exception {
         super.setUp();
-        oldDeployment = repositoryService.createDeployment()
+        repositoryService.createDeployment()
                 .addClasspathResource(DEPLOYMENT_FILE_PATH)
                 .deploy();
 
-        Map<String, Object> startMap = new HashMap<String, Object>();
+        Map<String, Object> startMap = new HashMap<>();
         startMap.put("test", 123);
         runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, startMap);
 
-        newDeployment = repositoryService.createDeployment()
+        repositoryService.createDeployment()
                 .addClasspathResource(DEPLOYMENT_FILE_PATH)
                 .deploy();
 
         startMap.clear();
         startMap.put("anothertest", 456);
         runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, startMap);
+        
+        waitForHistoryJobExecutorToProcessAllJobs(5000, 100);
     }
 
     protected void tearDown() throws Exception {
-        repositoryService.deleteDeployment(oldDeployment.getId(), true);
-        repositoryService.deleteDeployment(newDeployment.getId(), true);
+        deleteDeployments();
     }
 
     public void testHistoricProcessInstanceQueryByProcessDefinitionVersion() {
@@ -50,7 +61,7 @@ public class HistoricProcessInstanceQueryVersionTest extends PluggableFlowableTe
         assertEquals(0, historyService.createHistoricProcessInstanceQuery().processDefinitionVersion(3).list().size());
 
         // Variables Case
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricProcessInstance processInstance = historyService.createHistoricProcessInstanceQuery().includeProcessVariables()
                     .variableValueEquals("test", 123).processDefinitionVersion(1).singleResult();
             assertEquals(1, processInstance.getProcessDefinitionVersion().intValue());
@@ -89,7 +100,7 @@ public class HistoricProcessInstanceQueryVersionTest extends PluggableFlowableTe
         assertEquals(0, historyService.createHistoricProcessInstanceQuery().or().processDefinitionVersion(3).processDefinitionId("undefined").endOr().list().size());
 
         // Variables Case
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricProcessInstance processInstance = historyService.createHistoricProcessInstanceQuery().includeProcessVariables()
                     .or().variableValueEquals("test", "invalid").processDefinitionVersion(1).endOr().singleResult();
             assertEquals(1, processInstance.getProcessDefinitionVersion().intValue());

@@ -31,7 +31,7 @@ import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.delegate.DelegateTask;
 import org.flowable.engine.delegate.TaskListener;
-import org.flowable.engine.impl.context.Context;
+import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.repository.ProcessDefinition;
 
 /**
@@ -75,8 +75,9 @@ public class CdiTaskListener implements TaskListener, Serializable {
     }
 
     protected BusinessProcessEvent createEvent(DelegateTask task) {
-        ProcessDefinition processDefinition = Context.getProcessEngineConfiguration().getProcessDefinitionCache().get(task.getExecution().getProcessDefinitionId()).getProcessDefinition();
-        Date now = Context.getProcessEngineConfiguration().getClock().getCurrentTime();
+        ProcessEngineConfigurationImpl engineConfiguration = org.flowable.engine.impl.context.Context.getProcessEngineConfiguration();
+        ProcessDefinition processDefinition = engineConfiguration.getProcessDefinitionCache().get(task.getExecution().getProcessDefinitionId()).getProcessDefinition();
+        Date now = engineConfiguration.getClock().getCurrentTime();
         return new CdiBusinessProcessEvent(activityId, transitionName, processDefinition, task, type, task.getExecution().getProcessInstanceId(), task.getExecutionId(), now);
     }
 

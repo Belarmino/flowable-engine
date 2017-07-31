@@ -17,15 +17,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.flowable.engine.common.impl.db.DbSchemaManager;
+import org.flowable.engine.common.impl.interceptor.Command;
 import org.flowable.engine.common.impl.interceptor.CommandConfig;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 import org.flowable.idm.api.IdmIdentityService;
 import org.flowable.idm.api.IdmManagementService;
 import org.flowable.idm.engine.IdmEngine;
 import org.flowable.idm.engine.IdmEngineConfiguration;
-import org.flowable.idm.engine.impl.db.DbSqlSession;
-import org.flowable.idm.engine.impl.interceptor.Command;
-import org.flowable.idm.engine.impl.interceptor.CommandContext;
-import org.flowable.idm.engine.impl.interceptor.CommandExecutor;
+import org.flowable.idm.engine.impl.util.CommandContextUtil;
 import org.junit.Assert;
 
 import junit.framework.AssertionFailedError;
@@ -63,14 +64,14 @@ public abstract class AbstractFlowableIdmTestCase extends AbstractTestCase {
             super.runBare();
 
         } catch (AssertionFailedError e) {
-            log.error(EMPTY_LINE);
-            log.error("ASSERTION FAILED: {}", e, e);
+            LOGGER.error(EMPTY_LINE);
+            LOGGER.error("ASSERTION FAILED: {}", e, e);
             exception = e;
             throw e;
 
         } catch (Throwable e) {
-            log.error(EMPTY_LINE);
-            log.error("EXCEPTION: {}", e, e);
+            LOGGER.error(EMPTY_LINE);
+            LOGGER.error("EXCEPTION: {}", e, e);
             exception = e;
             throw e;
 
@@ -89,7 +90,7 @@ public abstract class AbstractFlowableIdmTestCase extends AbstractTestCase {
      * the DB is not clean. If the DB is not clean, it is cleaned by performing a create a drop.
      */
     protected void assertAndEnsureCleanDb() throws Throwable {
-        log.debug("verifying that db is clean after test");
+        LOGGER.debug("verifying that db is clean after test");
         Map<String, Long> tableCounts = idmManagementService.getTableCount();
         StringBuilder outputMessage = new StringBuilder();
         for (String tableName : tableCounts.keySet()) {
@@ -103,18 +104,18 @@ public abstract class AbstractFlowableIdmTestCase extends AbstractTestCase {
         }
         if (outputMessage.length() > 0) {
             outputMessage.insert(0, "DB NOT CLEAN: \n");
-            log.error(EMPTY_LINE);
-            log.error(outputMessage.toString());
+            LOGGER.error(EMPTY_LINE);
+            LOGGER.error(outputMessage.toString());
 
-            log.info("dropping and recreating db");
+            LOGGER.info("dropping and recreating db");
 
             CommandExecutor commandExecutor = idmEngine.getIdmEngineConfiguration().getCommandExecutor();
             CommandConfig config = new CommandConfig().transactionNotSupported();
             commandExecutor.execute(config, new Command<Object>() {
                 public Object execute(CommandContext commandContext) {
-                    DbSqlSession session = commandContext.getDbSqlSession();
-                    session.dbSchemaDrop();
-                    session.dbSchemaCreate();
+                    DbSchemaManager dbSchemaManager = CommandContextUtil.getIdmEngineConfiguration(commandContext).getDbSchemaManager();
+                    dbSchemaManager.dbSchemaCreate();
+                    dbSchemaManager.dbSchemaDrop();
                     return null;
                 }
             });
@@ -125,7 +126,7 @@ public abstract class AbstractFlowableIdmTestCase extends AbstractTestCase {
                 Assert.fail(outputMessage.toString());
             }
         } else {
-            log.info("database was clean");
+            LOGGER.info("database was clean");
         }
     }
 

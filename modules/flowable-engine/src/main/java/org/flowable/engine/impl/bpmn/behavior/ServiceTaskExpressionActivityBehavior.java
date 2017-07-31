@@ -18,14 +18,14 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.MapExceptionEntry;
 import org.flowable.engine.DynamicBpmnConstants;
-import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.Expression;
 import org.flowable.engine.impl.bpmn.helper.ErrorPropagation;
 import org.flowable.engine.impl.bpmn.helper.SkipExpressionUtil;
-import org.flowable.engine.impl.context.Context;
+import org.flowable.engine.impl.context.BpmnOverrideContext;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -64,12 +64,12 @@ public class ServiceTaskExpressionActivityBehavior extends TaskActivityBehavior 
             boolean isSkipExpressionEnabled = SkipExpressionUtil.isSkipExpressionEnabled(execution, skipExpression);
             if (!isSkipExpressionEnabled || (isSkipExpressionEnabled && !SkipExpressionUtil.shouldSkipFlowElement(execution, skipExpression))) {
 
-                if (Context.getProcessEngineConfiguration().isEnableProcessDefinitionInfoCache()) {
-                    ObjectNode taskElementProperties = Context.getBpmnOverrideElementProperties(serviceTaskId, execution.getProcessDefinitionId());
+                if (CommandContextUtil.getProcessEngineConfiguration().isEnableProcessDefinitionInfoCache()) {
+                    ObjectNode taskElementProperties = BpmnOverrideContext.getBpmnOverrideElementProperties(serviceTaskId, execution.getProcessDefinitionId());
                     if (taskElementProperties != null && taskElementProperties.has(DynamicBpmnConstants.SERVICE_TASK_EXPRESSION)) {
                         String overrideExpression = taskElementProperties.get(DynamicBpmnConstants.SERVICE_TASK_EXPRESSION).asText();
                         if (StringUtils.isNotEmpty(overrideExpression) && !overrideExpression.equals(expression.getExpressionText())) {
-                            expression = Context.getProcessEngineConfiguration().getExpressionManager().createExpression(overrideExpression);
+                            expression = CommandContextUtil.getProcessEngineConfiguration().getExpressionManager().createExpression(overrideExpression);
                         }
                     }
                 }

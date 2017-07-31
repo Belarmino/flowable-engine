@@ -56,7 +56,7 @@ public class DelegateTaskTest extends PluggableFlowableTestCase {
     public void testChangeCategoryInDelegateTask() {
 
         // Start process instance
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put("approvers", Collections.singletonList("kermit")); // , "gonzo", "mispiggy"));
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("delegateTaskTest", variables);
 
@@ -64,13 +64,12 @@ public class DelegateTaskTest extends PluggableFlowableTestCase {
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(processInstance.getId()).list();
         for (Task task : tasks) {
             assertEquals("approval", task.getCategory());
-            Map<String, Object> taskVariables = new HashMap<String, Object>();
+            Map<String, Object> taskVariables = new HashMap<>();
             taskVariables.put("outcome", "approve");
             taskService.complete(task.getId(), taskVariables, true);
         }
 
-        // After completion, the task category should be changed in the script
-        // listener working on the delegate task
+        // After completion, the task category should be changed in the script listener working on the delegate task
         assertEquals(0, taskService.createTaskQuery().processInstanceId(processInstance.getId()).count());
         for (HistoricTaskInstance historicTaskInstance : historyService.createHistoricTaskInstanceQuery().list()) {
             assertEquals("approved", historicTaskInstance.getCategory());

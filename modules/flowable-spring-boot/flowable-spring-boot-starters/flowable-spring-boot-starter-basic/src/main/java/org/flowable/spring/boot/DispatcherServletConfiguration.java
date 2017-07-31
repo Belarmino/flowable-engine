@@ -41,7 +41,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @EnableAsync
 public class DispatcherServletConfiguration extends WebMvcConfigurationSupport {
 
-    private final Logger log = LoggerFactory.getLogger(DispatcherServletConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DispatcherServletConfiguration.class);
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -56,7 +56,7 @@ public class DispatcherServletConfiguration extends WebMvcConfigurationSupport {
 
     @Bean
     public LocaleChangeInterceptor localeChangeInterceptor() {
-        log.debug("Configuring localeChangeInterceptor");
+        LOGGER.debug("Configuring localeChangeInterceptor");
         LocaleChangeInterceptor localeChangeInterceptor = new LocaleChangeInterceptor();
         localeChangeInterceptor.setParamName("language");
         return localeChangeInterceptor;
@@ -70,7 +70,7 @@ public class DispatcherServletConfiguration extends WebMvcConfigurationSupport {
 
     @Bean
     public RequestMappingHandlerMapping requestMappingHandlerMapping() {
-        log.debug("Creating requestMappingHandlerMapping");
+        LOGGER.debug("Creating requestMappingHandlerMapping");
         RequestMappingHandlerMapping requestMappingHandlerMapping = new RequestMappingHandlerMapping();
         requestMappingHandlerMapping.setUseSuffixPatternMatch(false);
         Object[] interceptors = { localeChangeInterceptor() };

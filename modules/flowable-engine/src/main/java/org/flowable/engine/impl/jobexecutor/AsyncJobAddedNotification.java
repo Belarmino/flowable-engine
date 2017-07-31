@@ -13,13 +13,14 @@
 package org.flowable.engine.impl.jobexecutor;
 
 import org.flowable.engine.common.impl.cfg.TransactionPropagation;
+import org.flowable.engine.common.impl.interceptor.Command;
 import org.flowable.engine.common.impl.interceptor.CommandConfig;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandContextCloseListener;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 import org.flowable.engine.impl.asyncexecutor.AsyncExecutor;
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.interceptor.CommandContextCloseListener;
-import org.flowable.engine.impl.interceptor.CommandExecutor;
-import org.flowable.engine.impl.persistence.entity.JobEntity;
+import org.flowable.engine.impl.persistence.entity.JobInfoEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,24 +29,24 @@ import org.slf4j.LoggerFactory;
  */
 public class AsyncJobAddedNotification implements CommandContextCloseListener {
 
-    private static Logger log = LoggerFactory.getLogger(AsyncJobAddedNotification.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AsyncJobAddedNotification.class);
 
-    protected JobEntity job;
+    protected JobInfoEntity job;
     protected AsyncExecutor asyncExecutor;
 
-    public AsyncJobAddedNotification(JobEntity job, AsyncExecutor asyncExecutor) {
+    public AsyncJobAddedNotification(JobInfoEntity job, AsyncExecutor asyncExecutor) {
         this.job = job;
         this.asyncExecutor = asyncExecutor;
     }
 
     @Override
     public void closed(CommandContext commandContext) {
-        CommandExecutor commandExecutor = commandContext.getProcessEngineConfiguration().getCommandExecutor();
+        CommandExecutor commandExecutor = CommandContextUtil.getProcessEngineConfiguration(commandContext).getCommandExecutor();
         CommandConfig commandConfig = new CommandConfig(false, TransactionPropagation.REQUIRES_NEW);
         commandExecutor.execute(commandConfig, new Command<Void>() {
             public Void execute(CommandContext commandContext) {
-                if (log.isTraceEnabled()) {
-                    log.trace("notifying job executor of new job");
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("notifying job executor of new job");
                 }
                 asyncExecutor.executeAsyncJob(job);
                 return null;

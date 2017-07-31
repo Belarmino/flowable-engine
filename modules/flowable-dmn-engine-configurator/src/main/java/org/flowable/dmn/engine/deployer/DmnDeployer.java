@@ -16,10 +16,10 @@ import java.util.Map;
 
 import org.flowable.dmn.api.DmnDeploymentBuilder;
 import org.flowable.dmn.api.DmnRepositoryService;
-import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.persistence.deploy.Deployer;
 import org.flowable.engine.impl.persistence.entity.DeploymentEntity;
 import org.flowable.engine.impl.persistence.entity.ResourceEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,23 +28,23 @@ import org.slf4j.LoggerFactory;
  */
 public class DmnDeployer implements Deployer {
 
-    private static final Logger log = LoggerFactory.getLogger(DmnDeployer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DmnDeployer.class);
 
     @Override
     public void deploy(DeploymentEntity deployment, Map<String, Object> deploymentSettings) {
         if (!deployment.isNew())
             return;
 
-        log.debug("DmnDeployer: processing deployment {}", deployment.getName());
+        LOGGER.debug("DmnDeployer: processing deployment {}", deployment.getName());
 
         DmnDeploymentBuilder dmnDeploymentBuilder = null;
 
         Map<String, ResourceEntity> resources = deployment.getResources();
         for (String resourceName : resources.keySet()) {
             if (resourceName.endsWith(".dmn")) {
-                log.info("DmnDeployer: processing resource {}", resourceName);
+                LOGGER.info("DmnDeployer: processing resource {}", resourceName);
                 if (dmnDeploymentBuilder == null) {
-                    DmnRepositoryService dmnRepositoryService = Context.getProcessEngineConfiguration().getDmnEngineRepositoryService();
+                    DmnRepositoryService dmnRepositoryService = CommandContextUtil.getDmnRepositoryService();
                     dmnDeploymentBuilder = dmnRepositoryService.createDeployment();
                 }
 

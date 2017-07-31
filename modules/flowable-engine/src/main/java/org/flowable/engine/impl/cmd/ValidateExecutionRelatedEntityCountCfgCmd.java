@@ -12,10 +12,11 @@
  */
 package org.flowable.engine.impl.cmd;
 
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.Command;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.persistence.entity.PropertyEntity;
 import org.flowable.engine.impl.persistence.entity.PropertyEntityManager;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ValidateExecutionRelatedEntityCountCfgCmd implements Command<Void> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ValidateExecutionRelatedEntityCountCfgCmd.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ValidateExecutionRelatedEntityCountCfgCmd.class);
 
     public static String PROPERTY_EXECUTION_RELATED_ENTITY_COUNT = "cfg.execution-related-entities-count";
 
@@ -43,9 +44,9 @@ public class ValidateExecutionRelatedEntityCountCfgCmd implements Command<Void> 
          * In case A and D (not there), the property needs to be written to the db Only in case E something needs to be done explicitly, the others are okay.
          */
 
-        PropertyEntityManager propertyEntityManager = commandContext.getPropertyEntityManager();
+        PropertyEntityManager propertyEntityManager = CommandContextUtil.getPropertyEntityManager(commandContext);
 
-        boolean configProperty = commandContext.getProcessEngineConfiguration().getPerformanceSettings().isEnableExecutionRelationshipCounts();
+        boolean configProperty = CommandContextUtil.getProcessEngineConfiguration(commandContext).getPerformanceSettings().isEnableExecutionRelationshipCounts();
         PropertyEntity propertyEntity = propertyEntityManager.findById(PROPERTY_EXECUTION_RELATED_ENTITY_COUNT);
 
         if (propertyEntity == null) {
@@ -61,11 +62,11 @@ public class ValidateExecutionRelatedEntityCountCfgCmd implements Command<Void> 
 
             boolean propertyValue = Boolean.valueOf(propertyEntity.getValue().toLowerCase());
             if (!configProperty && propertyValue) {
-                if (logger.isInfoEnabled()) {
-                    logger.info("Configuration change: execution related entity counting feature was enabled before, but now disabled. "
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info("Configuration change: execution related entity counting feature was enabled before, but now disabled. "
                             + "Updating all execution entities.");
                 }
-                commandContext.getProcessEngineConfiguration().getExecutionDataManager().updateAllExecutionRelatedEntityCountFlags(configProperty);
+                CommandContextUtil.getProcessEngineConfiguration(commandContext).getExecutionDataManager().updateAllExecutionRelatedEntityCountFlags(configProperty);
             }
 
             // Update property

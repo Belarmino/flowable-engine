@@ -21,13 +21,13 @@ import java.util.Set;
 import org.flowable.engine.DynamicBpmnConstants;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.Page;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.history.HistoricProcessInstanceQuery;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.interceptor.CommandExecutor;
+import org.flowable.engine.impl.context.BpmnOverrideContext;
 import org.flowable.engine.impl.persistence.entity.HistoricProcessInstanceEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.repository.ProcessDefinition;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -78,7 +78,7 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
     protected String nameLikeIgnoreCase;
     protected String locale;
     protected boolean withLocalizationFallback;
-    protected List<HistoricProcessInstanceQueryImpl> orQueryObjects = new ArrayList<HistoricProcessInstanceQueryImpl>();
+    protected List<HistoricProcessInstanceQueryImpl> orQueryObjects = new ArrayList<>();
     protected HistoricProcessInstanceQueryImpl currentOrQueryObject;
     protected boolean inOrStatement;
 
@@ -572,7 +572,7 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
     }
 
     public String getMssqlOrDB2OrderBy() {
-        String specialOrderBy = super.getOrderBy();
+        String specialOrderBy = super.getOrderByColumns();
         if (specialOrderBy != null && specialOrderBy.length() > 0) {
             specialOrderBy = specialOrderBy.replace("RES.", "TEMPRES_");
             specialOrderBy = specialOrderBy.replace("VAR.", "TEMPVAR_");
@@ -583,20 +583,20 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
     public long executeCount(CommandContext commandContext) {
         checkQueryOk();
         ensureVariablesInitialized();
-        return commandContext.getHistoricProcessInstanceEntityManager().findHistoricProcessInstanceCountByQueryCriteria(this);
+        return CommandContextUtil.getHistoricProcessInstanceEntityManager(commandContext).findHistoricProcessInstanceCountByQueryCriteria(this);
     }
 
-    public List<HistoricProcessInstance> executeList(CommandContext commandContext, Page page) {
+    public List<HistoricProcessInstance> executeList(CommandContext commandContext) {
         checkQueryOk();
         ensureVariablesInitialized();
         List<HistoricProcessInstance> results = null;
         if (includeProcessVariables) {
-            results = commandContext.getHistoricProcessInstanceEntityManager().findHistoricProcessInstancesAndVariablesByQueryCriteria(this);
+            results = CommandContextUtil.getHistoricProcessInstanceEntityManager(commandContext).findHistoricProcessInstancesAndVariablesByQueryCriteria(this);
         } else {
-            results = commandContext.getHistoricProcessInstanceEntityManager().findHistoricProcessInstancesByQueryCriteria(this);
+            results = CommandContextUtil.getHistoricProcessInstanceEntityManager(commandContext).findHistoricProcessInstancesByQueryCriteria(this);
         }
 
-        if (Context.getProcessEngineConfiguration().getPerformanceSettings().isEnableLocalization()) {
+        if (CommandContextUtil.getProcessEngineConfiguration().getPerformanceSettings().isEnableLocalization()) {
             for (HistoricProcessInstance processInstance : results) {
                 localize(processInstance, commandContext);
             }
@@ -611,8 +611,8 @@ public class HistoricProcessInstanceQueryImpl extends AbstractVariableQueryImpl<
         processInstanceEntity.setLocalizedDescription(null);
 
         if (locale != null && processInstance.getProcessDefinitionId() != null) {
-            ProcessDefinition processDefinition = commandContext.getProcessEngineConfiguration().getDeploymentManager().findDeployedProcessDefinitionById(processInstanceEntity.getProcessDefinitionId());
-            ObjectNode languageNode = Context.getLocalizationElementProperties(locale, processDefinition.getKey(),
+            ProcessDefinition processDefinition = CommandContextUtil.getProcessEngineConfiguration(commandContext).getDeploymentManager().findDeployedProcessDefinitionById(processInstanceEntity.getProcessDefinitionId());
+            ObjectNode languageNode = BpmnOverrideContext.getLocalizationElementProperties(locale, processDefinition.getKey(),
                     processInstanceEntity.getProcessDefinitionId(), withLocalizationFallback);
 
             if (languageNode != null) {

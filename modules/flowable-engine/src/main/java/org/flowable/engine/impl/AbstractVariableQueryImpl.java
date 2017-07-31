@@ -18,10 +18,9 @@ import java.util.List;
 
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
 import org.flowable.engine.common.api.query.Query;
-import org.flowable.engine.common.impl.Page;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.interceptor.CommandExecutor;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.variable.VariableTypes;
 
 /**
@@ -33,7 +32,7 @@ public abstract class AbstractVariableQueryImpl<T extends Query<?, ?>, U> extend
 
     private static final long serialVersionUID = 1L;
 
-    protected List<QueryVariableValue> queryVariableValues = new ArrayList<QueryVariableValue>();
+    protected List<QueryVariableValue> queryVariableValues = new ArrayList<>();
 
     public AbstractVariableQueryImpl() {
     }
@@ -50,7 +49,7 @@ public abstract class AbstractVariableQueryImpl<T extends Query<?, ?>, U> extend
     public abstract long executeCount(CommandContext commandContext);
 
     @Override
-    public abstract List<U> executeList(CommandContext commandContext, Page page);
+    public abstract List<U> executeList(CommandContext commandContext);
 
     public T variableValueEquals(String name, Object value) {
         return variableValueEquals(name, value, true);
@@ -210,7 +209,7 @@ public abstract class AbstractVariableQueryImpl<T extends Query<?, ?>, U> extend
 
     protected void ensureVariablesInitialized() {
         if (!queryVariableValues.isEmpty()) {
-            VariableTypes variableTypes = Context.getProcessEngineConfiguration().getVariableTypes();
+            VariableTypes variableTypes = CommandContextUtil.getProcessEngineConfiguration().getVariableTypes();
             for (QueryVariableValue queryVariableValue : queryVariableValues) {
                 queryVariableValue.initialize(variableTypes);
             }

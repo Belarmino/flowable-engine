@@ -30,6 +30,7 @@ import javax.mail.internet.MimeMultipart;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.impl.util.CollectionUtil;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.test.Deployment;
 import org.subethamail.wiser.WiserMessage;
 
@@ -54,8 +55,9 @@ public class EmailServiceTaskTest extends EmailTestCase {
     public void testSimpleTextMailWhenMultiTenant() throws Exception {
         String tenantId = "myEmailTenant";
 
-        org.flowable.engine.repository.Deployment deployment = repositoryService.createDeployment()
-                .addClasspathResource("org/flowable/engine/test/bpmn/mail/EmailSendTaskTest.testSimpleTextMail.bpmn20.xml").tenantId(tenantId).deploy();
+        repositoryService.createDeployment()
+                .addClasspathResource("org/flowable/engine/test/bpmn/mail/EmailSendTaskTest.testSimpleTextMail.bpmn20.xml")
+                .tenantId(tenantId).deploy();
         String procId = runtimeService.startProcessInstanceByKeyAndTenantId("simpleTextOnly", tenantId).getId();
 
         List<WiserMessage> messages = wiser.getMessages();
@@ -66,14 +68,15 @@ public class EmailServiceTaskTest extends EmailTestCase {
                 "kermit@activiti.org"), null);
         assertProcessEnded(procId);
 
-        repositoryService.deleteDeployment(deployment.getId(), true);
+        deleteDeployments();
     }
 
     public void testSimpleTextMailForNonExistentTenant() throws Exception {
         String tenantId = "nonExistentTenant";
 
-        org.flowable.engine.repository.Deployment deployment = repositoryService.createDeployment()
-                .addClasspathResource("org/flowable/engine/test/bpmn/mail/EmailSendTaskTest.testSimpleTextMail.bpmn20.xml").tenantId(tenantId).deploy();
+        repositoryService.createDeployment()
+                .addClasspathResource("org/flowable/engine/test/bpmn/mail/EmailSendTaskTest.testSimpleTextMail.bpmn20.xml")
+                .tenantId(tenantId).deploy();
         String procId = runtimeService.startProcessInstanceByKeyAndTenantId("simpleTextOnly", tenantId).getId();
 
         List<WiserMessage> messages = wiser.getMessages();
@@ -84,7 +87,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
                 "kermit@activiti.org"), null);
         assertProcessEnded(procId);
 
-        repositoryService.deleteDeployment(deployment.getId(), true);
+        deleteDeployments();
     }
 
     @Deployment
@@ -96,7 +99,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
         assertEquals(3, messages.size());
 
         // sort recipients for easy assertion
-        List<String> recipients = new ArrayList<String>();
+        List<String> recipients = new ArrayList<>();
         for (WiserMessage message : messages) {
             recipients.add(message.getEnvelopeReceiver());
         }
@@ -115,7 +118,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
         String recipientName = "Mr. Fozzie";
         String subject = "Fozzie, you should see this!";
 
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("sender", sender);
         vars.put("recipient", recipient);
         vars.put("recipientName", recipientName);
@@ -157,7 +160,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
 
     @Deployment
     public void testVariableTemplatedMail() throws Exception {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("gender", "male");
         vars.put("html", "<![CDATA[<html><body>Hello ${gender == 'male' ? 'Mr' : 'Ms' }. <b>Kermit</b><body></html>]]");
         runtimeService.startProcessInstanceByKey("variableTemplatedMail", vars);
@@ -170,7 +173,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
 
     @Deployment
     public void testTextMailWithFileAttachment() throws Exception {
-        HashMap<String, Object> vars = new HashMap<String, Object>();
+        HashMap<String, Object> vars = new HashMap<>();
         vars.put("attachmentsBean", new AttachmentsBean());
         runtimeService.startProcessInstanceByKey("textMailWithFileAttachment", vars);
 
@@ -185,7 +188,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
 
     @Deployment
     public void testTextMailWithFileAttachments() throws Exception {
-        HashMap<String, Object> vars = new HashMap<String, Object>();
+        HashMap<String, Object> vars = new HashMap<>();
         vars.put("attachmentsBean", new AttachmentsBean());
         runtimeService.startProcessInstanceByKey("textMailWithFileAttachments", vars);
 
@@ -203,7 +206,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
 
     @Deployment
     public void testTextMailWithFileAttachmentsByPath() throws Exception {
-        HashMap<String, Object> vars = new HashMap<String, Object>();
+        HashMap<String, Object> vars = new HashMap<>();
         vars.put("attachmentsBean", new AttachmentsBean());
         runtimeService.startProcessInstanceByKey("textMailWithFileAttachmentsByPath", vars);
 
@@ -223,7 +226,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
     public void testTextMailWithDataSourceAttachment() throws Exception {
         String fileName = "file-name-to-be-displayed";
         String fileContent = "This is the file content";
-        HashMap<String, Object> vars = new HashMap<String, Object>();
+        HashMap<String, Object> vars = new HashMap<>();
         vars.put("attachmentsBean", new AttachmentsBean());
         vars.put("fileContent", fileContent);
         vars.put("fileName", fileName);
@@ -240,7 +243,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
 
     @Deployment
     public void testTextMailWithNotExistingFileAttachment() throws Exception {
-        HashMap<String, Object> vars = new HashMap<String, Object>();
+        HashMap<String, Object> vars = new HashMap<>();
         vars.put("attachmentsBean", new AttachmentsBean());
         runtimeService.startProcessInstanceByKey("textMailWithNotExistingFileAttachment", vars);
 
@@ -252,7 +255,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
 
     @Deployment
     public void testHtmlMailWithFileAttachment() throws Exception {
-        HashMap<String, Object> vars = new HashMap<String, Object>();
+        HashMap<String, Object> vars = new HashMap<>();
         vars.put("attachmentsBean", new AttachmentsBean());
         vars.put("gender", "male");
         runtimeService.startProcessInstanceByKey("htmlMailWithFileAttachment", vars);
@@ -281,7 +284,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
     @Deployment
     public void testInvalidAddressWithoutException() throws Exception {
         String piId = runtimeService.startProcessInstanceByKey("invalidAddressWithoutException").getId();
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             assertNotNull(historyService.createHistoricVariableInstanceQuery().processInstanceId(piId).variableName("emailError").singleResult());
         }
     }
@@ -289,7 +292,7 @@ public class EmailServiceTaskTest extends EmailTestCase {
     @Deployment
     public void testInvalidAddressWithoutExceptionVariableName() throws Exception {
         String piId = runtimeService.startProcessInstanceByKey("invalidAddressWithoutException").getId();
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             assertNull(historyService.createHistoricVariableInstanceQuery().processInstanceId(piId).variableName("emailError").singleResult());
         }
     }

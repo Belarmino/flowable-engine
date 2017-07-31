@@ -107,8 +107,8 @@ public class BpmnXMLConverter implements BpmnXMLConstants {
     protected static final String BPMN_XSD = "org/flowable/impl/bpmn/parser/BPMN20.xsd";
     protected static final String DEFAULT_ENCODING = "UTF-8";
 
-    protected static Map<String, BaseBpmnXMLConverter> convertersToBpmnMap = new HashMap<String, BaseBpmnXMLConverter>();
-    protected static Map<Class<? extends BaseElement>, BaseBpmnXMLConverter> convertersToXMLMap = new HashMap<Class<? extends BaseElement>, BaseBpmnXMLConverter>();
+    protected static Map<String, BaseBpmnXMLConverter> convertersToBpmnMap = new HashMap<>();
+    protected static Map<Class<? extends BaseElement>, BaseBpmnXMLConverter> convertersToXMLMap = new HashMap<>();
 
     protected ClassLoader classloader;
     protected List<String> userTaskFormTypes;
@@ -146,6 +146,7 @@ public class BpmnXMLConverter implements BpmnXMLConstants {
         addConverter(new ReceiveTaskXMLConverter());
         addConverter(new ScriptTaskXMLConverter());
         addConverter(new ServiceTaskXMLConverter());
+        addConverter(new HttpServiceTaskXMLConverter());
         addConverter(new SendTaskXMLConverter());
         addConverter(new UserTaskXMLConverter());
         addConverter(new TaskXMLConverter());
@@ -291,7 +292,7 @@ public class BpmnXMLConverter implements BpmnXMLConstants {
         model.setUserTaskFormTypes(userTaskFormTypes);
         try {
             Process activeProcess = null;
-            List<SubProcess> activeSubProcessList = new ArrayList<SubProcess>();
+            List<SubProcess> activeSubProcessList = new ArrayList<>();
             while (xtr.hasNext()) {
                 try {
                     xtr.next();
@@ -598,7 +599,7 @@ public class BpmnXMLConverter implements BpmnXMLConstants {
                 xtw.writeEndElement();
             }
 
-            MultiInstanceExport.writeMultiInstance(subProcess, xtw);
+            MultiInstanceExport.writeMultiInstance(subProcess, model, xtw);
 
             if (subProcess instanceof AdhocSubProcess) {
                 AdhocSubProcess adhocSubProcess = (AdhocSubProcess) subProcess;

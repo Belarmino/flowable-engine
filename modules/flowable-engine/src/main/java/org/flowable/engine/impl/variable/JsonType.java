@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class JsonType implements VariableType {
 
-    private static final Logger logger = LoggerFactory.getLogger(JsonType.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonType.class);
 
     protected final int maxLength;
     protected ObjectMapper objectMapper;
@@ -47,7 +47,7 @@ public class JsonType implements VariableType {
             try {
                 jsonValue = objectMapper.readTree(valueFields.getTextValue());
             } catch (Exception e) {
-                logger.error("Error reading json variable {}", valueFields.getName(), e);
+                LOGGER.error("Error reading json variable {}", valueFields.getName(), e);
             }
         }
         return jsonValue;

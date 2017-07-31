@@ -13,6 +13,10 @@
 
 package org.flowable.engine.test.api.repository;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
 import org.flowable.engine.impl.persistence.entity.ProcessDefinitionEntity;
@@ -20,10 +24,6 @@ import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.repository.ProcessDefinitionQuery;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Joram Barrez
@@ -312,7 +312,7 @@ public class ProcessDefinitionQueryTest extends PluggableFlowableTestCase {
 
     public void testQueryByProcessDefinitionIds() {
         List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery().list();
-        Set<String> ids = new HashSet<String>();
+        Set<String> ids = new HashSet<>();
         for (ProcessDefinition processDefinition : processDefinitions) {
             ids.add(processDefinition.getId());
         }

@@ -13,9 +13,6 @@
 
 package org.flowable.engine.test.bpmn.event.timer;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -23,8 +20,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.ExecutionListener;
+import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.JobTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.runtime.Job;
@@ -110,7 +110,7 @@ public class BoundaryTimerEventTest extends PluggableFlowableTestCase {
         // Set the clock fixed
         Date startTime = new Date();
 
-        HashMap<String, Object> variables = new HashMap<String, Object>();
+        HashMap<String, Object> variables = new HashMap<>();
         variables.put("duration", "PT1H");
 
         // After process start, there should be a timer created
@@ -132,29 +132,61 @@ public class BoundaryTimerEventTest extends PluggableFlowableTestCase {
 
         // which means the process has ended
         assertProcessEnded(pi.getId());
+
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
+            assertNotNull(historyService.createHistoricActivityInstanceQuery().processInstanceId(pi.getId()).activityId("boundaryTimer").singleResult());
+        }
     }
 
     @Deployment
     public void testNullExpressionOnTimer() {
 
-        HashMap<String, Object> variables = new HashMap<String, Object>();
+        HashMap<String, Object> variables = new HashMap<>();
         variables.put("duration", null);
 
         // After process start, there should be a timer created
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey("testNullExpressionOnTimer", variables);
+        try {
+            runtimeService.startProcessInstanceByKey("testNullExpressionOnTimer", variables);
+            fail("Expected wrong due date exception");
+        } catch (FlowableException e) {
+            // expected
+            assertEquals("Due date could not be determined for timer job null", e.getMessage());
+        }
+    }
+    
+    @Deployment
+    public void testNullDueDateWithRepetition() {
 
-        // NO job scheduled as null expression set
-        TimerJobQuery jobQuery = managementService.createTimerJobQuery().processInstanceId(pi.getId());
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("initiator", "1");
+        variables.put("userId", "2");
+        variables.put("dueDate", new Date(new Date().getTime() + 6 * 60 * 60 * 1000)); // 6 hours later
+        variables.put("reminderTimeCycle", "0 0 0 1 1 ?");
+
+        String processInstanceId = runtimeService.startProcessInstanceByKey("test-timers", variables).getProcessInstanceId();
+        assertNotNull(processInstanceId);
+
+        TimerJobQuery jobQuery = managementService.createTimerJobQuery().processInstanceId(processInstanceId);
         List<Job> jobs = jobQuery.list();
-        assertEquals(0, jobs.size());
+        assertEquals(1, jobs.size());
+    }
+    
+    @Deployment
+    public void testNullDueDateWithWrongRepetition() {
 
-        // which means the process is still running waiting for human task input.
-        ProcessInstance processInstance = processEngine
-                .getRuntimeService()
-                .createProcessInstanceQuery()
-                .processInstanceId(pi.getId())
-                .singleResult();
-        assertNotNull(processInstance);
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("initiator", "1");
+        variables.put("userId", "2");
+        variables.put("dueDate", new Date(new Date().getTime() + 6 * 60 * 60 * 1000)); // 6 hours later
+        variables.put("reminderTimeCycle", "0 0 0 1 1 ? 2000");
+
+        try {
+            runtimeService.startProcessInstanceByKey("test-timers", variables).getProcessInstanceId();
+            fail("Expected wrong due date exception");
+        } catch (FlowableException e) {
+            // expected
+            assertEquals("Due date could not be determined for timer job 0 0 0 1 1 ? 2000", e.getMessage());
+        }
     }
 
     @Deployment
@@ -191,7 +223,7 @@ public class BoundaryTimerEventTest extends PluggableFlowableTestCase {
         Date currentTime = simpleDateFormat.parse("2015.10.01 11:01");
         processEngineConfiguration.getClock().setCurrentTime(currentTime);
 
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("timerString", "R/2015-10-01T11:00:00/PT24H");
         runtimeService.startProcessInstanceByKey("testTimerErrors", vars);
 
@@ -256,7 +288,7 @@ public class BoundaryTimerEventTest extends PluggableFlowableTestCase {
         Date currentTime = simpleDateFormat.parse("2015.10.01 11:01");
         processEngineConfiguration.getClock().setCurrentTime(currentTime);
 
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put("patient", "kermit");
         runtimeService.startProcessInstanceByKey("process1", vars);
 
@@ -367,7 +399,7 @@ public class BoundaryTimerEventTest extends PluggableFlowableTestCase {
         calendar.add(Calendar.HOUR, 1);
         long startTimeInMillis = calendar.getTime().getTime();
 
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put("startDate", calendar.getTime());
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("rescheduleTimer", variables);
 
@@ -427,7 +459,7 @@ public class BoundaryTimerEventTest extends PluggableFlowableTestCase {
         calendar.add(Calendar.HOUR, 1);
         long startTimeInMillis = calendar.getTime().getTime();
 
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put("startDate", calendar.getTime());
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("rescheduleTimer", variables);
 
@@ -488,7 +520,7 @@ public class BoundaryTimerEventTest extends PluggableFlowableTestCase {
         calendar.add(Calendar.HOUR, 1);
         long startTimeInMillis = calendar.getTime().getTime();
 
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put("startDate", calendar.getTime());
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("rescheduleTimer", variables);
 

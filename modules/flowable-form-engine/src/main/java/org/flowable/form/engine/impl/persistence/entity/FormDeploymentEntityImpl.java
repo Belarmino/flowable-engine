@@ -35,7 +35,7 @@ public class FormDeploymentEntityImpl extends AbstractEntityNoRevision implement
     protected String category;
     protected String tenantId = FormEngineConfiguration.NO_TENANT_ID;
     protected String parentDeploymentId;
-    protected Map<String, ResourceEntity> resources;
+    protected Map<String, FormResourceEntity> resources;
     protected Date deploymentTime;
     protected boolean isNew;
 
@@ -48,19 +48,19 @@ public class FormDeploymentEntityImpl extends AbstractEntityNoRevision implement
 
     }
 
-    public void addResource(ResourceEntity resource) {
+    public void addResource(FormResourceEntity resource) {
         if (resources == null) {
-            resources = new HashMap<String, ResourceEntity>();
+            resources = new HashMap<>();
         }
         resources.put(resource.getName(), resource);
     }
 
-    public Map<String, ResourceEntity> getResources() {
+    public Map<String, FormResourceEntity> getResources() {
         return resources;
     }
 
     public Object getPersistentState() {
-        Map<String, Object> persistentState = new HashMap<String, Object>();
+        Map<String, Object> persistentState = new HashMap<>();
         persistentState.put("category", this.category);
         persistentState.put("tenantId", tenantId);
         return persistentState;
@@ -70,13 +70,13 @@ public class FormDeploymentEntityImpl extends AbstractEntityNoRevision implement
 
     public void addDeployedArtifact(Object deployedArtifact) {
         if (deployedArtifacts == null) {
-            deployedArtifacts = new HashMap<Class<?>, List<Object>>();
+            deployedArtifacts = new HashMap<>();
         }
 
         Class<?> clazz = deployedArtifact.getClass();
         List<Object> artifacts = deployedArtifacts.get(clazz);
         if (artifacts == null) {
-            artifacts = new ArrayList<Object>();
+            artifacts = new ArrayList<>();
             deployedArtifacts.put(clazz, artifacts);
         }
 
@@ -127,7 +127,7 @@ public class FormDeploymentEntityImpl extends AbstractEntityNoRevision implement
         this.parentDeploymentId = parentDeploymentId;
     }
 
-    public void setResources(Map<String, ResourceEntity> resources) {
+    public void setResources(Map<String, FormResourceEntity> resources) {
         this.resources = resources;
     }
 

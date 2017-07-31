@@ -12,7 +12,10 @@
  */
 package org.flowable.app.service.runtime;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * @author Tijs Rademakers
  */
@@ -44,7 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Transactional
 public class FlowableAppDefinitionService {
 
-    private static final Logger logger = LoggerFactory.getLogger(FlowableAppDefinitionService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FlowableAppDefinitionService.class);
 
     @Autowired
     protected RepositoryService repositoryService;
@@ -156,6 +157,7 @@ public class FlowableAppDefinitionService {
         AppModel appModel = repositoryService.getAppResourceModel(deployment.getId());
         resultAppDef.setTheme(appModel.getTheme());
         resultAppDef.setIcon(appModel.getIcon());
+        resultAppDef.setDescription(appModel.getDescription());
         if (StringUtils.isNotEmpty(appModel.getUsersAccess())) {
             resultAppDef.setUsersAccess(convertToList(appModel.getUsersAccess()));
         }
@@ -170,9 +172,7 @@ public class FlowableAppDefinitionService {
     protected List<String> convertToList(String commaSeperatedString) {
         List<String> resultList = new ArrayList<>();
         String[] stringArray = commaSeperatedString.split(",");
-        for (String value : stringArray) {
-            resultList.add(value);
-        }
+        resultList.addAll(Arrays.asList(stringArray));
         
         return resultList;
     }

@@ -13,19 +13,18 @@
 
 package org.flowable.engine.impl.el;
 
-import javax.el.ELContext;
-import javax.el.ELException;
-import javax.el.MethodNotFoundException;
-import javax.el.PropertyNotFoundException;
-import javax.el.ValueExpression;
-
 import org.flowable.engine.common.api.FlowableException;
+import org.flowable.engine.common.impl.javax.el.ELContext;
+import org.flowable.engine.common.impl.javax.el.ELException;
+import org.flowable.engine.common.impl.javax.el.MethodNotFoundException;
+import org.flowable.engine.common.impl.javax.el.PropertyNotFoundException;
+import org.flowable.engine.common.impl.javax.el.ValueExpression;
 import org.flowable.engine.delegate.Expression;
 import org.flowable.engine.delegate.VariableScope;
-import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.delegate.invocation.ExpressionGetInvocation;
 import org.flowable.engine.impl.delegate.invocation.ExpressionSetInvocation;
 import org.flowable.engine.impl.interceptor.DelegateInterceptor;
+import org.flowable.engine.impl.util.CommandContextUtil;
 
 /**
  * Expression implementation backed by a JUEL {@link ValueExpression}.
@@ -35,6 +34,8 @@ import org.flowable.engine.impl.interceptor.DelegateInterceptor;
  */
 public class JuelExpression implements Expression {
 
+    private static final long serialVersionUID = 1L;
+    
     protected String expressionText;
     protected ValueExpression valueExpression;
     protected ExpressionManager expressionManager;
@@ -53,6 +54,7 @@ public class JuelExpression implements Expression {
             ExpressionGetInvocation invocation = new ExpressionGetInvocation(valueExpression, elContext);
             delegateInterceptor.handleInvocation(invocation);
             return invocation.getInvocationResult();
+            
         } catch (PropertyNotFoundException pnfe) {
             throw new FlowableException("Unknown property used in expression: " + expressionText, pnfe);
         } catch (MethodNotFoundException mnfe) {
@@ -68,7 +70,7 @@ public class JuelExpression implements Expression {
         ELContext elContext = expressionManager.getElContext(variableScope);
         try {
             ExpressionSetInvocation invocation = new ExpressionSetInvocation(valueExpression, elContext, value);
-            Context.getProcessEngineConfiguration().getDelegateInterceptor().handleInvocation(invocation);
+            CommandContextUtil.getProcessEngineConfiguration().getDelegateInterceptor().handleInvocation(invocation);
         } catch (Exception e) {
             throw new FlowableException("Error while evaluating expression: " + expressionText, e);
         }

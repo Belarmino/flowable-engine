@@ -15,7 +15,6 @@ package org.flowable.engine.impl.persistence.entity.data.impl;
 import java.util.List;
 import java.util.Map;
 
-import org.flowable.engine.common.impl.Page;
 import org.flowable.engine.history.HistoricDetail;
 import org.flowable.engine.impl.HistoricDetailQueryImpl;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
@@ -23,8 +22,6 @@ import org.flowable.engine.impl.persistence.entity.HistoricDetailAssignmentEntit
 import org.flowable.engine.impl.persistence.entity.HistoricDetailAssignmentEntityImpl;
 import org.flowable.engine.impl.persistence.entity.HistoricDetailEntity;
 import org.flowable.engine.impl.persistence.entity.HistoricDetailEntityImpl;
-import org.flowable.engine.impl.persistence.entity.HistoricDetailTransitionInstanceEntity;
-import org.flowable.engine.impl.persistence.entity.HistoricDetailTransitionInstanceEntityImpl;
 import org.flowable.engine.impl.persistence.entity.HistoricDetailVariableInstanceUpdateEntity;
 import org.flowable.engine.impl.persistence.entity.HistoricDetailVariableInstanceUpdateEntityImpl;
 import org.flowable.engine.impl.persistence.entity.HistoricFormPropertyEntity;
@@ -58,11 +55,6 @@ public class MybatisHistoricDetailDataManager extends AbstractDataManager<Histor
     }
 
     @Override
-    public HistoricDetailTransitionInstanceEntity createHistoricDetailTransitionInstance() {
-        return new HistoricDetailTransitionInstanceEntityImpl();
-    }
-
-    @Override
     public HistoricDetailVariableInstanceUpdateEntity createHistoricDetailVariableInstanceUpdate() {
         return new HistoricDetailVariableInstanceUpdateEntityImpl();
     }
@@ -91,14 +83,14 @@ public class MybatisHistoricDetailDataManager extends AbstractDataManager<Histor
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<HistoricDetail> findHistoricDetailsByQueryCriteria(HistoricDetailQueryImpl historicVariableUpdateQuery, Page page) {
-        return getDbSqlSession().selectList("selectHistoricDetailsByQueryCriteria", historicVariableUpdateQuery, page);
+    public List<HistoricDetail> findHistoricDetailsByQueryCriteria(HistoricDetailQueryImpl historicVariableUpdateQuery) {
+        return getDbSqlSession().selectList("selectHistoricDetailsByQueryCriteria", historicVariableUpdateQuery);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<HistoricDetail> findHistoricDetailsByNativeQuery(Map<String, Object> parameterMap, int firstResult, int maxResults) {
-        return getDbSqlSession().selectListWithRawParameter("selectHistoricDetailByNativeQuery", parameterMap, firstResult, maxResults);
+    public List<HistoricDetail> findHistoricDetailsByNativeQuery(Map<String, Object> parameterMap) {
+        return getDbSqlSession().selectListWithRawParameter("selectHistoricDetailByNativeQuery", parameterMap);
     }
 
     @Override

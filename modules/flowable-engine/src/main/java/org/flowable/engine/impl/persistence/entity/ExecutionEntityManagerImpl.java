@@ -16,14 +16,18 @@ package org.flowable.engine.impl.persistence.entity;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.flowable.bpmn.model.BoundaryEvent;
+import org.flowable.bpmn.model.FlowElement;
+import org.flowable.bpmn.model.FlowNode;
 import org.flowable.engine.common.api.FlowableObjectNotFoundException;
-import org.flowable.engine.common.impl.Page;
 import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
 import org.flowable.engine.delegate.event.FlowableEngineEventType;
 import org.flowable.engine.delegate.event.impl.FlowableEventBuilder;
@@ -31,10 +35,10 @@ import org.flowable.engine.history.DeleteReason;
 import org.flowable.engine.impl.ExecutionQueryImpl;
 import org.flowable.engine.impl.ProcessInstanceQueryImpl;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
-import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.identity.Authentication;
 import org.flowable.engine.impl.persistence.CountingExecutionEntity;
 import org.flowable.engine.impl.persistence.entity.data.ExecutionDataManager;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -48,7 +52,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionEntity> implements ExecutionEntityManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExecutionEntityManagerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExecutionEntityManagerImpl.class);
 
     protected ExecutionDataManager executionDataManager;
 
@@ -103,8 +107,8 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
     }
 
     @Override
-    public List<ExecutionEntity> findExecutionsByQueryCriteria(ExecutionQueryImpl executionQuery, Page page) {
-        return executionDataManager.findExecutionsByQueryCriteria(executionQuery, page);
+    public List<ExecutionEntity> findExecutionsByQueryCriteria(ExecutionQueryImpl executionQuery) {
+        return executionDataManager.findExecutionsByQueryCriteria(executionQuery);
     }
 
     @Override
@@ -132,7 +136,7 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
         ExecutionEntity rootExecution = null;
 
         // Collect executions
-        Map<String, ExecutionEntity> executionMap = new HashMap<String, ExecutionEntity>(executions.size());
+        Map<String, ExecutionEntity> executionMap = new HashMap<>(executions.size());
         for (ExecutionEntity executionEntity : executions) {
             if (executionEntity.getId().equals(rootProcessInstanceId)) {
                 rootExecution = executionEntity;
@@ -187,13 +191,13 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
     }
 
     @Override
-    public List<Execution> findExecutionsByNativeQuery(Map<String, Object> parameterMap, int firstResult, int maxResults) {
-        return executionDataManager.findExecutionsByNativeQuery(parameterMap, firstResult, maxResults);
+    public List<Execution> findExecutionsByNativeQuery(Map<String, Object> parameterMap) {
+        return executionDataManager.findExecutionsByNativeQuery(parameterMap);
     }
 
     @Override
-    public List<ProcessInstance> findProcessInstanceByNativeQuery(Map<String, Object> parameterMap, int firstResult, int maxResults) {
-        return executionDataManager.findProcessInstanceByNativeQuery(parameterMap, firstResult, maxResults);
+    public List<ProcessInstance> findProcessInstanceByNativeQuery(Map<String, Object> parameterMap) {
+        return executionDataManager.findProcessInstanceByNativeQuery(parameterMap);
     }
 
     @Override
@@ -204,7 +208,9 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
     // CREATE METHODS
 
     @Override
-    public ExecutionEntity createProcessInstanceExecution(ProcessDefinition processDefinition, String businessKey, String tenantId, String initiatorVariableName) {
+    public ExecutionEntity createProcessInstanceExecution(ProcessDefinition processDefinition, String businessKey, String tenantId, 
+                    String initiatorVariableName, String startActivityId) {
+        
         ExecutionEntity processInstanceExecution = executionDataManager.create();
 
         if (isExecutionRelatedEntityCountEnabledGlobally()) {
@@ -225,7 +231,8 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
 
         String authenticatedUserId = Authentication.getAuthenticatedUserId();
 
-        processInstanceExecution.setStartTime(Context.getProcessEngineConfiguration().getClock().getCurrentTime());
+        processInstanceExecution.setStartActivityId(startActivityId);
+        processInstanceExecution.setStartTime(CommandContextUtil.getProcessEngineConfiguration().getClock().getCurrentTime());
         processInstanceExecution.setStartUserId(authenticatedUserId);
 
         // Store in database
@@ -270,8 +277,8 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
         // Insert the child execution
         insert(childExecution, false);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Child execution {} created with parent {}", childExecution, parentExecutionEntity.getId());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Child execution {} created with parent {}", childExecution, parentExecutionEntity.getId());
         }
 
         if (getEventDispatcher().isEnabled()) {
@@ -283,7 +290,9 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
     }
 
     @Override
-    public ExecutionEntity createSubprocessInstance(ProcessDefinition processDefinition, ExecutionEntity superExecutionEntity, String businessKey) {
+    public ExecutionEntity createSubprocessInstance(ProcessDefinition processDefinition, ExecutionEntity superExecutionEntity, 
+                    String businessKey, String activityId) {
+        
         ExecutionEntity subProcessInstance = executionDataManager.create();
         inheritCommonProperties(superExecutionEntity, subProcessInstance);
         subProcessInstance.setProcessDefinitionId(processDefinition.getId());
@@ -292,21 +301,22 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
         subProcessInstance.setSuperExecution(superExecutionEntity);
         subProcessInstance.setRootProcessInstanceId(superExecutionEntity.getRootProcessInstanceId());
         subProcessInstance.setScope(true); // process instance is always a scope for all child executions
+        subProcessInstance.setStartActivityId(activityId);
         subProcessInstance.setStartUserId(Authentication.getAuthenticatedUserId());
         subProcessInstance.setBusinessKey(businessKey);
 
         // Store in database
         insert(subProcessInstance, false);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Child execution {} created with super execution {}", subProcessInstance, superExecutionEntity.getId());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Child execution {} created with super execution {}", subProcessInstance, superExecutionEntity.getId());
         }
 
         subProcessInstance.setProcessInstanceId(subProcessInstance.getId());
         superExecutionEntity.setSubProcessInstance(subProcessInstance);
 
-        if (Context.getProcessEngineConfiguration() != null && Context.getProcessEngineConfiguration().getEventDispatcher().isEnabled()) {
-            Context.getProcessEngineConfiguration().getEventDispatcher().dispatchEvent(FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.ENTITY_CREATED, subProcessInstance));
+        if (CommandContextUtil.getProcessEngineConfiguration() != null && CommandContextUtil.getProcessEngineConfiguration().getEventDispatcher().isEnabled()) {
+            CommandContextUtil.getProcessEngineConfiguration().getEventDispatcher().dispatchEvent(FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.ENTITY_CREATED, subProcessInstance));
         }
 
         return subProcessInstance;
@@ -349,7 +359,7 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
         }
 
         if (cascade) {
-            getHistoricProcessInstanceEntityManager().deleteHistoricProcessInstanceByProcessDefinitionId(processDefinitionId);
+            getHistoryManager().recordDeleteHistoricProcessInstancesByProcessDefinitionId(processDefinitionId);
         }
     }
 
@@ -376,11 +386,25 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
                 for (ExecutionEntity miExecutionEntity : subExecutionEntity.getExecutions()) {
                     if (miExecutionEntity.getSubProcessInstance() != null) {
                         deleteProcessInstanceCascade(miExecutionEntity.getSubProcessInstance(), deleteReason, deleteHistory);
+                        
+                        if (getEventDispatcher().isEnabled()) {
+                            FlowElement callActivityElement = miExecutionEntity.getCurrentFlowElement();
+                            getEventDispatcher().dispatchEvent(FlowableEventBuilder.createActivityCancelledEvent(callActivityElement.getId(), 
+                                            callActivityElement.getName(), miExecutionEntity.getId(), miExecutionEntity.getProcessInstanceId(), 
+                                            miExecutionEntity.getProcessDefinitionId(), "callActivity", deleteReason));
+                        }
                     }
                 }
 
             } else if (subExecutionEntity.getSubProcessInstance() != null) {
                 deleteProcessInstanceCascade(subExecutionEntity.getSubProcessInstance(), deleteReason, deleteHistory);
+                
+                if (getEventDispatcher().isEnabled()) {
+                    FlowElement callActivityElement = subExecutionEntity.getCurrentFlowElement();
+                    getEventDispatcher().dispatchEvent(FlowableEventBuilder.createActivityCancelledEvent(callActivityElement.getId(), 
+                                    callActivityElement.getName(), subExecutionEntity.getId(), subExecutionEntity.getProcessInstanceId(), 
+                                    subExecutionEntity.getProcessDefinitionId(), "callActivity", deleteReason));
+                }
             }
         }
 
@@ -402,29 +426,43 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
         List<ExecutionEntity> childExecutions = collectChildren(execution.getProcessInstance());
         for (int i = childExecutions.size() - 1; i >= 0; i--) {
             ExecutionEntity childExecutionEntity = childExecutions.get(i);
-            deleteExecutionAndRelatedData(childExecutionEntity, deleteReason, false);
+            deleteExecutionAndRelatedData(childExecutionEntity, deleteReason);
         }
 
-        deleteExecutionAndRelatedData(execution, deleteReason, false);
+        deleteExecutionAndRelatedData(execution, deleteReason);
 
         if (deleteHistory) {
-            getHistoricProcessInstanceEntityManager().delete(execution.getId());
+            getHistoryManager().recordProcessInstanceDeleted(execution.getId());
         }
 
-        getHistoryManager().recordProcessInstanceEnd(processInstanceExecutionEntity.getId(), deleteReason, null);
+        getHistoryManager().recordProcessInstanceEnd(processInstanceExecutionEntity, deleteReason, null);
         processInstanceExecutionEntity.setDeleted(true);
+    }
+    
+    @Override
+    public void deleteExecutionAndRelatedData(ExecutionEntity executionEntity, String deleteReason, boolean cancel, FlowElement cancelActivity) {
+        if (executionEntity.isActive()
+                && executionEntity.getCurrentFlowElement() != null 
+                && !executionEntity.isMultiInstanceRoot()
+                && !(executionEntity.getCurrentFlowElement() instanceof BoundaryEvent)) {  // Boundary events will handle the history themselves (see TriggerExecutionOperation for example)
+            getHistoryManager().recordActivityEnd(executionEntity, deleteReason);
+        }
+        deleteRelatedDataForExecution(executionEntity, deleteReason);
+        delete(executionEntity);
+        
+        if (cancel) {
+            dispatchActivityCancelled(executionEntity, cancelActivity != null ? cancelActivity : executionEntity.getCurrentFlowElement());
+        }
     }
 
     @Override
-    public void deleteExecutionAndRelatedData(ExecutionEntity executionEntity, String deleteReason, boolean cancel) {
-        getHistoryManager().recordActivityEnd(executionEntity, deleteReason);
-        deleteDataForExecution(executionEntity, deleteReason, cancel);
-        delete(executionEntity);
+    public void deleteExecutionAndRelatedData(ExecutionEntity executionEntity, String deleteReason) {
+       deleteExecutionAndRelatedData(executionEntity, deleteReason, false, null);
     }
 
     @Override
     public void deleteProcessInstanceExecutionEntity(String processInstanceId,
-            String currentFlowElementId, String deleteReason, boolean cascade, boolean cancel) {
+            String currentFlowElementId, String deleteReason, boolean cascade, boolean cancel, boolean fireEvents) {
 
         ExecutionEntity processInstanceEntity = findById(processInstanceId);
 
@@ -440,20 +478,27 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
         for (ExecutionEntity subExecutionEntity : processInstanceEntity.getExecutions()) {
             if (subExecutionEntity.getSubProcessInstance() != null &&  !subExecutionEntity.isEnded()) {
                 deleteProcessInstanceCascade(subExecutionEntity.getSubProcessInstance(), deleteReason, cascade);
+                
+                if (getEventDispatcher().isEnabled() && fireEvents) {
+                    FlowElement callActivityElement = subExecutionEntity.getCurrentFlowElement();
+                    getEventDispatcher().dispatchEvent(FlowableEventBuilder.createActivityCancelledEvent(callActivityElement.getId(), 
+                                    callActivityElement.getName(), subExecutionEntity.getId(), processInstanceId, subExecutionEntity.getProcessDefinitionId(), 
+                                    "callActivity", deleteReason));
+                }
             }
         }
 
         // delete event scope executions
         for (ExecutionEntity childExecution : processInstanceEntity.getExecutions()) {
             if (childExecution.isEventScope()) {
-                deleteExecutionAndRelatedData(childExecution, null, false);
+                deleteExecutionAndRelatedData(childExecution, null);
             }
         }
 
         deleteChildExecutions(processInstanceEntity, deleteReason, cancel);
-        deleteExecutionAndRelatedData(processInstanceEntity, deleteReason, cancel);
+        deleteExecutionAndRelatedData(processInstanceEntity, deleteReason);
 
-        if (getEventDispatcher().isEnabled()) {
+        if (getEventDispatcher().isEnabled() && fireEvents) {
             if (!cancel) {
                 getEventDispatcher().dispatchEvent(FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.PROCESS_COMPLETED, processInstanceEntity));
             } else {
@@ -462,50 +507,126 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
             }
         }
 
-        // TODO: what about delete reason?
-        getHistoryManager().recordProcessInstanceEnd(processInstanceEntity.getId(), deleteReason, currentFlowElementId);
+        getHistoryManager().recordProcessInstanceEnd(processInstanceEntity, deleteReason, currentFlowElementId);
         processInstanceEntity.setDeleted(true);
     }
 
     @Override
     public void deleteChildExecutions(ExecutionEntity executionEntity, String deleteReason, boolean cancel) {
+        deleteChildExecutions(executionEntity, null, deleteReason, cancel, null);
+    }
+    
+    @Override
+    public void deleteChildExecutions(ExecutionEntity executionEntity, Collection<String> executionIdsNotToDelete, String deleteReason, boolean cancel, FlowElement cancelActivity) {
 
         // The children of an execution for a tree. For correct deletions
         // (taking care of foreign keys between child-parent)
         // the leafs of this tree must be deleted first before the parents elements.
 
-        List<? extends ExecutionEntity> childExecutions = collectChildren(executionEntity);
+        List<ExecutionEntity> childExecutions = collectChildren(executionEntity, executionIdsNotToDelete);
         for (int i = childExecutions.size() - 1; i >= 0; i--) {
             ExecutionEntity childExecutionEntity = childExecutions.get(i);
             if (!childExecutionEntity.isEnded()) {
-                deleteExecutionAndRelatedData(childExecutionEntity, deleteReason, cancel);
+                if (executionIdsNotToDelete == null || (executionIdsNotToDelete != null
+                        && !executionIdsNotToDelete.contains(childExecutionEntity.getId()))) {
+
+                    if (childExecutionEntity.isProcessInstanceType()) {
+                        deleteProcessInstanceExecutionEntity(childExecutionEntity.getId(), 
+                                cancelActivity != null ? cancelActivity.getId() : null, deleteReason, true, cancel, true);
+
+                    } else {
+                        deleteExecutionAndRelatedData(childExecutionEntity, deleteReason);
+                        if (cancel) {
+                            dispatchExecutionCancelled(childExecutionEntity, 
+                                    cancelActivity != null ? cancelActivity : childExecutionEntity.getCurrentFlowElement());
+                        }
+
+                    }
+
+                }
             }
         }
-
     }
 
     public List<ExecutionEntity> collectChildren(ExecutionEntity executionEntity) {
+       return collectChildren(executionEntity, null);
+    }
+    
+    protected List<ExecutionEntity> collectChildren(ExecutionEntity executionEntity, Collection<String> executionIdsToExclude) {
         List<ExecutionEntity> childExecutions = new ArrayList<ExecutionEntity>();
-        collectChildren(executionEntity, childExecutions);
+        collectChildren(executionEntity, childExecutions, executionIdsToExclude != null ? executionIdsToExclude : Collections.<String>emptyList());
         return childExecutions;
     }
 
-    protected void collectChildren(ExecutionEntity executionEntity, List<ExecutionEntity> collectedChildExecution) {
+    @SuppressWarnings("unchecked")
+    protected void collectChildren(ExecutionEntity executionEntity, List<ExecutionEntity> collectedChildExecution,  Collection<String> executionIdsToExclude) {
         List<ExecutionEntity> childExecutions = (List<ExecutionEntity>) executionEntity.getExecutions();
         if (childExecutions != null && childExecutions.size() > 0) {
+            
+            // Have a fixed ordering of child executions (important for the order in which events are sent)
+            Collections.sort(childExecutions, new Comparator<ExecutionEntity>() {
+                @Override
+                public int compare(ExecutionEntity e1, ExecutionEntity e2) {
+                    return e1.getStartTime().compareTo(e2.getStartTime());
+                }
+            });
+            
             for (ExecutionEntity childExecution : childExecutions) {
-                if (!childExecution.isDeleted()) {
-                    collectedChildExecution.add(childExecution);
-                    collectChildren(childExecution, collectedChildExecution);
+                if (!executionIdsToExclude.contains(childExecution.getId())) {
+                    if (!childExecution.isDeleted()) {
+                        collectedChildExecution.add(childExecution);
+                    }
+                    
+                    collectChildren(childExecution, collectedChildExecution, executionIdsToExclude);
                 }
             }
         }
 
         ExecutionEntity subProcessInstance = executionEntity.getSubProcessInstance();
-        if (subProcessInstance != null && !subProcessInstance.isDeleted()) {
-            collectedChildExecution.add(subProcessInstance);
-            collectChildren(subProcessInstance, collectedChildExecution);
+        if (subProcessInstance != null && !executionIdsToExclude.contains(subProcessInstance.getId())) {
+            if (!subProcessInstance.isDeleted()) {
+                collectedChildExecution.add(subProcessInstance);
+            }
+            
+            collectChildren(subProcessInstance, collectedChildExecution, executionIdsToExclude);
         }
+    }
+    
+    protected void dispatchExecutionCancelled(ExecutionEntity execution, FlowElement cancelActivity) {
+
+        ExecutionEntityManager executionEntityManager = CommandContextUtil.getExecutionEntityManager();
+
+        // subprocesses
+        for (ExecutionEntity subExecution : executionEntityManager.findChildExecutionsByParentExecutionId(execution.getId())) {
+            dispatchExecutionCancelled(subExecution, cancelActivity);
+        }
+
+        // call activities
+        ExecutionEntity subProcessInstance = CommandContextUtil.getExecutionEntityManager().findSubProcessInstanceBySuperExecutionId(execution.getId());
+        if (subProcessInstance != null) {
+            dispatchExecutionCancelled(subProcessInstance, cancelActivity);
+        }
+
+        // activity with message/signal boundary events
+        FlowElement currentFlowElement = execution.getCurrentFlowElement();
+        if (currentFlowElement instanceof FlowNode) {
+            dispatchActivityCancelled(execution, cancelActivity);
+        }
+    }
+    
+    protected void dispatchActivityCancelled(ExecutionEntity execution, FlowElement cancelActivity) {
+        CommandContextUtil.getProcessEngineConfiguration()
+                .getEventDispatcher()
+                .dispatchEvent(
+                        FlowableEventBuilder.createActivityCancelledEvent(execution.getCurrentFlowElement().getId(),
+                                execution.getCurrentFlowElement().getName(), execution.getId(), execution.getProcessInstanceId(),
+                                execution.getProcessDefinitionId(), getActivityType((FlowNode) execution.getCurrentFlowElement()), cancelActivity));
+    }
+    
+    protected String getActivityType(FlowNode flowNode) {
+        String elementType = flowNode.getClass().getSimpleName();
+        elementType = elementType.substring(0, 1).toLowerCase() + elementType.substring(1);
+        return elementType;
     }
 
     @Override
@@ -542,7 +663,7 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
         return null;
     }
 
-    public void deleteDataForExecution(ExecutionEntity executionEntity, String deleteReason, boolean cancel) {
+    public void deleteRelatedDataForExecution(ExecutionEntity executionEntity, String deleteReason) {
 
         // To start, deactivate the current incoming execution
         executionEntity.setEnded(true);
@@ -586,7 +707,7 @@ public class ExecutionEntityManagerImpl extends AbstractEntityManager<ExecutionE
             TaskEntityManager taskEntityManager = getTaskEntityManager();
             Collection<TaskEntity> tasksForExecution = taskEntityManager.findTasksByExecutionId(executionEntity.getId());
             for (TaskEntity taskEntity : tasksForExecution) {
-                taskEntityManager.deleteTask(taskEntity, deleteReason, false, cancel);
+                taskEntityManager.deleteTask(taskEntity, deleteReason, false, true);
             }
         }
 

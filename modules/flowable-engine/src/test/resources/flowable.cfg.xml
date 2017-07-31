@@ -47,15 +47,17 @@
     </property>
     
     <property name="history" value="full" />
+    <property name="asyncHistoryEnabled" value="false" />
     
     <property name="enableProcessDefinitionInfoCache" value="true" />
+    
   </bean>
   
   <bean id="asyncExecutor" class="org.flowable.engine.impl.asyncexecutor.DefaultAsyncJobExecutor">
     <property name="defaultAsyncJobAcquireWaitTimeInMillis" value="1000" />
     <property name="defaultTimerJobAcquireWaitTimeInMillis" value="1000" />
   </bean>
-  
+    
   <bean id="throwCustomExceptionBean" class="org.flowable.engine.test.bpmn.event.error.mapError.ThrowCustomExceptionBean" />
   <bean id="throwCustomExceptionDelegate" class="org.flowable.engine.test.bpmn.event.error.mapError.ThrowCustomExceptionDelegate" />
 

@@ -21,7 +21,6 @@ import org.flowable.dmn.api.DmnDeployment;
 import org.flowable.dmn.engine.DmnEngineConfiguration;
 import org.flowable.dmn.engine.impl.DmnDeploymentQueryImpl;
 import org.flowable.dmn.engine.impl.persistence.entity.data.DmnDeploymentDataManager;
-import org.flowable.engine.common.impl.Page;
 import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
 
 /**
@@ -46,7 +45,7 @@ public class DmnDeploymentEntityManagerImpl extends AbstractEntityManager<DmnDep
     public void insert(DmnDeploymentEntity deployment) {
         super.insert(deployment, true);
 
-        for (ResourceEntity resource : deployment.getResources().values()) {
+        for (DmnResourceEntity resource : deployment.getResources().values()) {
             resource.setDeploymentId(deployment.getId());
             getResourceEntityManager().insert(resource);
         }
@@ -54,13 +53,10 @@ public class DmnDeploymentEntityManagerImpl extends AbstractEntityManager<DmnDep
 
     @Override
     public void deleteDeployment(String deploymentId) {
-        deleteDecisionTablesForDeployment(deploymentId);
+        getHistoricDecisionExecutionEntityManager().deleteHistoricDecisionExecutionsByDeploymentId(deploymentId);
+        getDecisionTableEntityManager().deleteDecisionTablesByDeploymentId(deploymentId);
         getResourceEntityManager().deleteResourcesByDeploymentId(deploymentId);
         delete(findById(deploymentId));
-    }
-
-    protected void deleteDecisionTablesForDeployment(String deploymentId) {
-        getDecisionTableEntityManager().deleteDecisionTablesByDeploymentId(deploymentId);
     }
 
     protected DecisionTableEntity findLatestDecisionTable(DmnDecisionTable decisionTable) {
@@ -75,18 +71,13 @@ public class DmnDeploymentEntityManagerImpl extends AbstractEntityManager<DmnDep
     }
 
     @Override
-    public DmnDeploymentEntity findLatestDeploymentByName(String deploymentName) {
-        return deploymentDataManager.findLatestDeploymentByName(deploymentName);
-    }
-
-    @Override
     public long findDeploymentCountByQueryCriteria(DmnDeploymentQueryImpl deploymentQuery) {
         return deploymentDataManager.findDeploymentCountByQueryCriteria(deploymentQuery);
     }
 
     @Override
-    public List<DmnDeployment> findDeploymentsByQueryCriteria(DmnDeploymentQueryImpl deploymentQuery, Page page) {
-        return deploymentDataManager.findDeploymentsByQueryCriteria(deploymentQuery, page);
+    public List<DmnDeployment> findDeploymentsByQueryCriteria(DmnDeploymentQueryImpl deploymentQuery) {
+        return deploymentDataManager.findDeploymentsByQueryCriteria(deploymentQuery);
     }
 
     @Override
@@ -95,8 +86,8 @@ public class DmnDeploymentEntityManagerImpl extends AbstractEntityManager<DmnDep
     }
 
     @Override
-    public List<DmnDeployment> findDeploymentsByNativeQuery(Map<String, Object> parameterMap, int firstResult, int maxResults) {
-        return deploymentDataManager.findDeploymentsByNativeQuery(parameterMap, firstResult, maxResults);
+    public List<DmnDeployment> findDeploymentsByNativeQuery(Map<String, Object> parameterMap) {
+        return deploymentDataManager.findDeploymentsByNativeQuery(parameterMap);
     }
 
     @Override

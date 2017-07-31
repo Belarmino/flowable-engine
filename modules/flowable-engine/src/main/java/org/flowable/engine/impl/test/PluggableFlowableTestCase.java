@@ -16,10 +16,10 @@ package org.flowable.engine.impl.test;
 import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.ProcessEngines;
 import org.flowable.engine.common.api.FlowableException;
+import org.flowable.engine.common.impl.cfg.CommandExecutorImpl;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
+import org.flowable.engine.common.impl.interceptor.CommandInterceptor;
 import org.flowable.engine.impl.ProcessEngineImpl;
-import org.flowable.engine.impl.cfg.CommandExecutorImpl;
-import org.flowable.engine.impl.interceptor.CommandExecutor;
-import org.flowable.engine.impl.interceptor.CommandInterceptor;
 import org.flowable.engine.impl.interceptor.CommandInvoker;
 import org.flowable.engine.impl.interceptor.LoggingExecutionTreeCommandInvoker;
 import org.flowable.engine.test.EnableVerboseExecutionTreeLogging;
@@ -38,13 +38,12 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class PluggableFlowableTestCase extends AbstractFlowableTestCase {
 
-    private static Logger pluggableActivitiTestCaseLogger = LoggerFactory.getLogger(PluggableFlowableTestCase.class);
+    private static final Logger pluggableActivitiTestCaseLogger = LoggerFactory.getLogger(PluggableFlowableTestCase.class);
 
     protected static ProcessEngine cachedProcessEngine;
 
     protected void initializeProcessEngine() {
         if (cachedProcessEngine == null) {
-
             pluggableActivitiTestCaseLogger.info("No cached process engine found for test. Retrieving the default engine.");
             ProcessEngines.destroy(); // Just to be sure we're not getting any previously cached version
 

@@ -12,8 +12,6 @@
  */
 package org.flowable.examples.bpmn.scripttask;
 
-import groovy.lang.MissingPropertyException;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +23,8 @@ import org.flowable.engine.test.Deployment;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import groovy.lang.MissingPropertyException;
+
 /**
  * @author Joram Barrez
  * @author Christian Stettler
@@ -33,7 +33,7 @@ public class ScriptTaskTest extends PluggableFlowableTestCase {
 
     @Deployment
     public void testSetScriptResultToProcessVariable() {
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put("echo", "hello");
         variables.put("existingProcessVariableName", "one");
 

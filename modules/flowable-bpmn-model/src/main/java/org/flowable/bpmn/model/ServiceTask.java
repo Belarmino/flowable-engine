@@ -22,6 +22,7 @@ public class ServiceTask extends TaskWithFieldExtensions {
 
     public static final String DMN_TASK = "dmn";
     public static final String MAIL_TASK = "mail";
+    public static final String HTTP_TASK = "http";
 
     protected String implementation;
     protected String implementationType;
@@ -29,7 +30,7 @@ public class ServiceTask extends TaskWithFieldExtensions {
     protected String type;
     protected String operationRef;
     protected String extensionId;
-    protected List<CustomProperty> customProperties = new ArrayList<CustomProperty>();
+    protected List<CustomProperty> customProperties = new ArrayList<>();
     protected String skipExpression;
 
     public String getImplementation() {
@@ -116,14 +117,14 @@ public class ServiceTask extends TaskWithFieldExtensions {
         setExtensionId(otherElement.getExtensionId());
         setSkipExpression(otherElement.getSkipExpression());
 
-        fieldExtensions = new ArrayList<FieldExtension>();
+        fieldExtensions = new ArrayList<>();
         if (otherElement.getFieldExtensions() != null && !otherElement.getFieldExtensions().isEmpty()) {
             for (FieldExtension extension : otherElement.getFieldExtensions()) {
                 fieldExtensions.add(extension.clone());
             }
         }
 
-        customProperties = new ArrayList<CustomProperty>();
+        customProperties = new ArrayList<>();
         if (otherElement.getCustomProperties() != null && !otherElement.getCustomProperties().isEmpty()) {
             for (CustomProperty property : otherElement.getCustomProperties()) {
                 customProperties.add(property.clone());

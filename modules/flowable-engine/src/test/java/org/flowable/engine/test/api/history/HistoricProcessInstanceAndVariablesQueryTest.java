@@ -20,6 +20,7 @@ import java.util.Map;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.history.HistoricProcessInstanceQuery;
 import org.flowable.engine.impl.history.HistoryLevel;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.task.Task;
 
@@ -47,10 +48,10 @@ public class HistoricProcessInstanceAndVariablesQueryTest extends PluggableFlowa
                 .addClasspathResource("org/flowable/engine/test/api/runtime/oneTaskProcess3.bpmn20.xml")
                 .deploy();
 
-        Map<String, Object> startMap = new HashMap<String, Object>();
+        Map<String, Object> startMap = new HashMap<>();
         startMap.put("test", "test");
         startMap.put("test2", "test2");
-        processInstanceIds = new ArrayList<String>();
+        processInstanceIds = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             processInstanceIds.add(runtimeService.startProcessInstanceByKey(PROCESS_DEFINITION_KEY, String.valueOf(i), startMap).getId());
             if (i == 0) {
@@ -68,14 +69,13 @@ public class HistoricProcessInstanceAndVariablesQueryTest extends PluggableFlowa
     }
 
     protected void tearDown() throws Exception {
-        for (org.flowable.engine.repository.Deployment deployment : repositoryService.createDeploymentQuery().list()) {
-            repositoryService.deleteDeployment(deployment.getId(), true);
-        }
+        deleteDeployments();
+        
         super.tearDown();
     }
 
     public void testQuery() {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricProcessInstance processInstance = historyService.createHistoricProcessInstanceQuery().includeProcessVariables().variableValueEquals("anothertest", 123).singleResult();
             Map<String, Object> variableMap = processInstance.getProcessVariables();
             assertEquals(1, variableMap.size());
@@ -184,7 +184,7 @@ public class HistoricProcessInstanceAndVariablesQueryTest extends PluggableFlowa
     }
 
     public void testQueryByprocessDefinition() {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             // DeploymentId
             String deploymentId = repositoryService.createDeploymentQuery().list().get(0).getId();
             HistoricProcessInstance processInstance = historyService.createHistoricProcessInstanceQuery().includeProcessVariables()
@@ -224,7 +224,7 @@ public class HistoricProcessInstanceAndVariablesQueryTest extends PluggableFlowa
     }
 
     public void testOrQuery() {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricProcessInstance processInstance = historyService.createHistoricProcessInstanceQuery().includeProcessVariables().or().variableValueEquals("anothertest", 123)
                     .processDefinitionId("undefined").endOr().singleResult();
             Map<String, Object> variableMap = processInstance.getProcessVariables();
@@ -344,7 +344,7 @@ public class HistoricProcessInstanceAndVariablesQueryTest extends PluggableFlowa
     }
 
     public void testOrQueryMultipleVariableValues() {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             HistoricProcessInstanceQuery query0 = historyService.createHistoricProcessInstanceQuery().includeProcessVariables().or();
             for (int i = 0; i < 20; i++) {
                 query0 = query0.variableValueEquals("anothertest", i);
@@ -395,7 +395,7 @@ public class HistoricProcessInstanceAndVariablesQueryTest extends PluggableFlowa
     }
 
     public void testOrQueryByprocessDefinition() {
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.ACTIVITY, processEngineConfiguration)) {
             // DeploymentId
             String deploymentId = repositoryService.createDeploymentQuery().list().get(0).getId();
             HistoricProcessInstanceQuery historicprocessInstanceQuery = historyService.createHistoricProcessInstanceQuery().includeProcessVariables()

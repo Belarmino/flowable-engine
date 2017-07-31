@@ -18,15 +18,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.flowable.engine.common.impl.db.DbSqlSession;
+import org.flowable.engine.common.impl.persistence.cache.CachedEntity;
+import org.flowable.engine.common.impl.persistence.cache.EntityCache;
 import org.flowable.engine.common.impl.persistence.entity.Entity;
 import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
-import org.flowable.engine.impl.db.DbSqlSession;
 import org.flowable.engine.impl.persistence.AbstractManager;
 import org.flowable.engine.impl.persistence.CachedEntityMatcher;
 import org.flowable.engine.impl.persistence.SingleCachedEntityMatcher;
-import org.flowable.engine.impl.persistence.cache.CachedEntity;
-import org.flowable.engine.impl.persistence.cache.EntityCache;
 
 /**
  * @author Joram Barrez
@@ -130,7 +130,7 @@ public abstract class AbstractDataManager<EntityImpl extends Entity> extends Abs
 
             if ((cachedObjects != null && cachedObjects.size() > 0) || getManagedEntitySubClasses() != null) {
 
-                HashMap<String, EntityImpl> entityMap = new HashMap<String, EntityImpl>(result.size());
+                HashMap<String, EntityImpl> entityMap = new HashMap<>(result.size());
 
                 // Database entities
                 for (EntityImpl entity : result) {
@@ -177,7 +177,7 @@ public abstract class AbstractDataManager<EntityImpl extends Entity> extends Abs
             }
         }
 
-        return new ArrayList<EntityImpl>(result);
+        return new ArrayList<>(result);
     }
 
     protected List<EntityImpl> getListFromCache(CachedEntityMatcher<EntityImpl> entityMatcher, Object parameter) {
@@ -185,7 +185,7 @@ public abstract class AbstractDataManager<EntityImpl extends Entity> extends Abs
 
         DbSqlSession dbSqlSession = getDbSqlSession();
 
-        List<EntityImpl> result = new ArrayList<EntityImpl>(cachedObjects.size());
+        List<EntityImpl> result = new ArrayList<>(cachedObjects.size());
         if (cachedObjects != null && entityMatcher != null) {
             for (CachedEntity cachedObject : cachedObjects) {
                 EntityImpl cachedEntity = (EntityImpl) cachedObject.getEntity();

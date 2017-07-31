@@ -16,10 +16,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.flowable.engine.common.impl.db.DbSqlSession;
 import org.flowable.engine.common.impl.persistence.entity.Entity;
 import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
 import org.flowable.form.engine.FormEngineConfiguration;
-import org.flowable.form.engine.impl.db.DbSqlSession;
 import org.flowable.form.engine.impl.persistence.AbstractManager;
 
 /**
@@ -81,7 +81,7 @@ public abstract class AbstractDataManager<EntityImpl extends Entity> extends Abs
     @SuppressWarnings("unchecked")
     protected List<EntityImpl> getList(String dbQueryName, Object parameter) {
         Collection<EntityImpl> result = getDbSqlSession().selectList(dbQueryName, parameter);
-        return new ArrayList<EntityImpl>(result);
+        return new ArrayList<>(result);
     }
 
 }

@@ -1,3 +1,15 @@
+/* Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.flowable.engine.test.api.variables;
 
 import java.io.Serializable;
@@ -40,7 +52,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
     }
 
     private Map<String, Object> generateVariables() {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
 
         // 10 Strings
         for (int i = 0; i < 10; i++) {
@@ -496,7 +508,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertEquals("localTaskVarValue", taskService.getVariableLocal(task.getId(), "localTaskVar"));
 
         // Override process variable
-        Collection<String> varNames = new ArrayList<String>();
+        Collection<String> varNames = new ArrayList<>();
         varNames.add("stringVar1");
         assertEquals("stringVarValue-1", taskService.getVariable(task.getId(), "stringVar1"));
         assertEquals("stringVarValue-1", taskService.getVariable(task.getId(), "stringVar1"));

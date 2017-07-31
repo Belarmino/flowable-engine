@@ -26,7 +26,7 @@ public class SuspendedJobEntity extends AbstractJobEntity {
 
     private static final long serialVersionUID = 1L;
 
-    private static Logger log = LoggerFactory.getLogger(SuspendedJobEntity.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SuspendedJobEntity.class);
 
     public SuspendedJobEntity() {
     }
@@ -46,6 +46,7 @@ public class SuspendedJobEntity extends AbstractJobEntity {
         this.processInstanceId = te.getProcessInstanceId();
         this.processDefinitionId = te.getProcessDefinitionId();
         this.exceptionMessage = te.getExceptionMessage();
+        this.createTime = te.getCreateTime();
         setExceptionStacktrace(te.getExceptionStacktrace());
 
         // Inherit tenant

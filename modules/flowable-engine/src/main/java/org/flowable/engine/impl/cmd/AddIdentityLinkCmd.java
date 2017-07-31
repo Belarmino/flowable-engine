@@ -13,9 +13,10 @@
 package org.flowable.engine.impl.cmd;
 
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.compatibility.Flowable5CompatibilityHandler;
-import org.flowable.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.persistence.entity.TaskEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.util.Flowable5Util;
 import org.flowable.engine.task.IdentityLinkType;
 
@@ -72,14 +73,39 @@ public class AddIdentityLinkCmd extends NeedsActiveTaskCmd<Void> {
             return null;
         }
 
+        String oldAssigneeId = task.getAssignee();
+        String oldOwnerId = task.getOwner();
+        
         boolean assignedToNoOne = false;
         if (IdentityLinkType.ASSIGNEE.equals(identityType)) {
-            commandContext.getTaskEntityManager().changeTaskAssignee(task, identityId);
+            
+            if (oldAssigneeId == null && identityId == null) {
+                return null;
+            }
+            
+            if (oldAssigneeId != null && oldAssigneeId.equals(identityId)) {
+                return null;
+            }
+            
+            CommandContextUtil.getTaskEntityManager(commandContext).changeTaskAssignee(task, identityId);
             assignedToNoOne = identityId == null;
+            
         } else if (IdentityLinkType.OWNER.equals(identityType)) {
-            commandContext.getTaskEntityManager().changeTaskOwner(task, identityId);
+            
+            if (oldOwnerId == null && identityId == null) {
+                return null;
+            }
+            
+            if (oldOwnerId != null && oldOwnerId.equals(identityId)) {
+                return null;
+            }
+            
+            CommandContextUtil.getTaskEntityManager(commandContext).changeTaskOwner(task, identityId);
+            assignedToNoOne = identityId == null;
+
         } else if (IDENTITY_USER == identityIdType) {
             task.addUserIdentityLink(identityId, identityType);
+            
         } else if (IDENTITY_GROUP == identityIdType) {
             task.addGroupIdentityLink(identityId, identityType);
         }
@@ -89,13 +115,17 @@ public class AddIdentityLinkCmd extends NeedsActiveTaskCmd<Void> {
             // ACT-1317: Special handling when assignee is set to NULL, a
             // CommentEntity notifying of assignee-delete should be created
             forceNullUserId = true;
-
+            if (IdentityLinkType.ASSIGNEE.equals(identityType)) { 
+                identityId = oldAssigneeId;
+            } else {
+                identityId = oldOwnerId;
+            }
         }
 
         if (IDENTITY_USER == identityIdType) {
-            commandContext.getHistoryManager().createUserIdentityLinkComment(taskId, identityId, identityType, true, forceNullUserId);
+            CommandContextUtil.getHistoryManager(commandContext).createUserIdentityLinkComment(taskId, identityId, identityType, true, forceNullUserId);
         } else {
-            commandContext.getHistoryManager().createGroupIdentityLinkComment(taskId, identityId, identityType, true);
+            CommandContextUtil.getHistoryManager(commandContext).createGroupIdentityLinkComment(taskId, identityId, identityType, true);
         }
 
         return null;

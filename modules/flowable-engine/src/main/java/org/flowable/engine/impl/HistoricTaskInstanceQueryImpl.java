@@ -20,13 +20,13 @@ import java.util.List;
 import org.flowable.engine.DynamicBpmnConstants;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.Page;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 import org.flowable.engine.history.HistoricTaskInstance;
 import org.flowable.engine.history.HistoricTaskInstanceQuery;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.interceptor.CommandExecutor;
+import org.flowable.engine.impl.context.BpmnOverrideContext;
 import org.flowable.engine.impl.persistence.entity.HistoricTaskInstanceEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.variable.VariableTypes;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -107,7 +107,7 @@ public class HistoricTaskInstanceQueryImpl extends AbstractVariableQueryImpl<His
     protected boolean includeProcessVariables;
     protected Integer taskVariablesLimit;
     protected boolean includeIdentityLinks;
-    protected List<HistoricTaskInstanceQueryImpl> orQueryObjects = new ArrayList<HistoricTaskInstanceQueryImpl>();
+    protected List<HistoricTaskInstanceQueryImpl> orQueryObjects = new ArrayList<>();
     protected HistoricTaskInstanceQueryImpl currentOrQueryObject;
     protected boolean inOrStatement;
 
@@ -127,21 +127,21 @@ public class HistoricTaskInstanceQueryImpl extends AbstractVariableQueryImpl<His
     public long executeCount(CommandContext commandContext) {
         ensureVariablesInitialized();
         checkQueryOk();
-        return commandContext.getHistoricTaskInstanceEntityManager().findHistoricTaskInstanceCountByQueryCriteria(this);
+        return CommandContextUtil.getHistoricTaskInstanceEntityManager(commandContext).findHistoricTaskInstanceCountByQueryCriteria(this);
     }
 
     @Override
-    public List<HistoricTaskInstance> executeList(CommandContext commandContext, Page page) {
+    public List<HistoricTaskInstance> executeList(CommandContext commandContext) {
         ensureVariablesInitialized();
         checkQueryOk();
         List<HistoricTaskInstance> tasks = null;
         if (includeTaskLocalVariables || includeProcessVariables || includeIdentityLinks) {
-            tasks = commandContext.getHistoricTaskInstanceEntityManager().findHistoricTaskInstancesAndRelatedEntitiesByQueryCriteria(this);
+            tasks = CommandContextUtil.getHistoricTaskInstanceEntityManager(commandContext).findHistoricTaskInstancesAndRelatedEntitiesByQueryCriteria(this);
         } else {
-            tasks = commandContext.getHistoricTaskInstanceEntityManager().findHistoricTaskInstancesByQueryCriteria(this);
+            tasks = CommandContextUtil.getHistoricTaskInstanceEntityManager(commandContext).findHistoricTaskInstancesByQueryCriteria(this);
         }
 
-        if (tasks != null && Context.getProcessEngineConfiguration().getPerformanceSettings().isEnableLocalization()) {
+        if (tasks != null && CommandContextUtil.getProcessEngineConfiguration().getPerformanceSettings().isEnableLocalization()) {
             for (HistoricTaskInstance task : tasks) {
                 localize(task);
             }
@@ -411,7 +411,7 @@ public class HistoricTaskInstanceQueryImpl extends AbstractVariableQueryImpl<His
         }
 
         final int nameListSize = taskNameList.size();
-        final List<String> caseIgnoredTaskNameList = new ArrayList<String>(nameListSize);
+        final List<String> caseIgnoredTaskNameList = new ArrayList<>(nameListSize);
         for (String taskName : taskNameList) {
             caseIgnoredTaskNameList.add(taskName.toLowerCase());
         }
@@ -862,7 +862,7 @@ public class HistoricTaskInstanceQueryImpl extends AbstractVariableQueryImpl<His
     }
 
     protected void ensureVariablesInitialized() {
-        VariableTypes types = Context.getProcessEngineConfiguration().getVariableTypes();
+        VariableTypes types = CommandContextUtil.getProcessEngineConfiguration().getVariableTypes();
         for (QueryVariableValue var : queryVariableValues) {
             var.initialize(types);
         }
@@ -1128,7 +1128,7 @@ public class HistoricTaskInstanceQueryImpl extends AbstractVariableQueryImpl<His
         if (locale != null) {
             String processDefinitionId = task.getProcessDefinitionId();
             if (processDefinitionId != null) {
-                ObjectNode languageNode = Context.getLocalizationElementProperties(locale, task.getTaskDefinitionKey(), processDefinitionId, withLocalizationFallback);
+                ObjectNode languageNode = BpmnOverrideContext.getLocalizationElementProperties(locale, task.getTaskDefinitionKey(), processDefinitionId, withLocalizationFallback);
                 if (languageNode != null) {
                     JsonNode languageNameNode = languageNode.get(DynamicBpmnConstants.LOCALIZATION_NAME);
                     if (languageNameNode != null && !languageNameNode.isNull()) {
@@ -1261,7 +1261,7 @@ public class HistoricTaskInstanceQueryImpl extends AbstractVariableQueryImpl<His
     }
 
     public String getMssqlOrDB2OrderBy() {
-        String specialOrderBy = super.getOrderBy();
+        String specialOrderBy = super.getOrderByColumns();
         if (specialOrderBy != null && specialOrderBy.length() > 0) {
             specialOrderBy = specialOrderBy.replace("RES.", "TEMPRES_");
             specialOrderBy = specialOrderBy.replace("VAR.", "TEMPVAR_");
@@ -1271,7 +1271,7 @@ public class HistoricTaskInstanceQueryImpl extends AbstractVariableQueryImpl<His
 
     public List<String> getCandidateGroups() {
         if (candidateGroup != null) {
-            List<String> candidateGroupList = new ArrayList<String>(1);
+            List<String> candidateGroupList = new ArrayList<>(1);
             candidateGroupList.add(candidateGroup);
             return candidateGroupList;
 
@@ -1285,7 +1285,7 @@ public class HistoricTaskInstanceQueryImpl extends AbstractVariableQueryImpl<His
     }
 
     protected List<String> getGroupsForCandidateUser(String candidateUser) {
-        return Context.getProcessEngineConfiguration().getCandidateManager().getGroupsForCandidateUser(candidateUser);
+        return CommandContextUtil.getProcessEngineConfiguration().getCandidateManager().getGroupsForCandidateUser(candidateUser);
     }
 
     // getters and setters

@@ -53,7 +53,7 @@
       LAST_ = #{lastName ,jdbcType=VARCHAR},
       EMAIL_ = #{email ,jdbcType=VARCHAR},
       PWD_ = #{password ,jdbcType=VARCHAR},
-      PICTURE_ID_ = #{pictureByteArrayRef ,typeHandler=ByteArrayRefTypeHandler}
+      PICTURE_ID_ = #{pictureByteArrayRef ,typeHandler=IdmByteArrayRefTypeHandler}
     where ID_ = #{id}
       and REV_ = #{revision}
   </update>
@@ -73,7 +73,7 @@
     <result property="lastName" column="LAST_" jdbcType="VARCHAR" />
     <result property="email" column="EMAIL_" jdbcType="VARCHAR" />
     <result property="password" column="PWD_" jdbcType="VARCHAR" />
-    <result property="pictureByteArrayRef" column="PICTURE_ID_" typeHandler="ByteArrayRefTypeHandler" />
+    <result property="pictureByteArrayRef" column="PICTURE_ID_" typeHandler="IdmByteArrayRefTypeHandler" />
   </resultMap>
   
   <!-- USER SELECT -->
@@ -83,14 +83,14 @@
   </select>
     
   <select id="selectUserByQueryCriteria" parameterType="org.flowable.idm.engine.impl.UserQueryImpl" resultMap="userResultMap">
-  	${limitBefore}
-    select RES.* ${limitBetween}
+  	<if test="firstResult != null and firstResult &gt;= 0">${limitBefore}</if>
+    select RES.* <if test="firstResult != null and firstResult &gt;= 0">${limitBetween}</if>
     <include refid="selectUserByQueryCriteriaSql" />
     ${orderBy}
-    ${limitAfter}
+    <if test="firstResult != null and firstResult &gt;= 0">${limitAfter}</if>
   </select>
   
-   <select id="selectUserCountByQueryCriteria" parameterType="org.flowable.idm.engine.impl.UserQueryImpl" resultType="long">
+  <select id="selectUserCountByQueryCriteria" parameterType="org.flowable.idm.engine.impl.UserQueryImpl" resultType="long">
     select count(RES.ID_)
     <include refid="selectUserByQueryCriteriaSql" />
   </select>
@@ -134,10 +134,10 @@
         and lower(RES.LAST_) like #{lastNameLikeIgnoreCase}${wildcardEscapeClause}
       </if>
       <if test="fullNameLike != null">
-        and (RES.FIRST_ like #{fullNameLike}${wildcardEscapeClause} or RES.LAST_ like #{fullNameLike}${wildcardEscapeClause})
+        and (CONCAT(CONCAT(RES.FIRST_, ' '), RES.LAST_) like #{fullNameLike}${wildcardEscapeClause})
       </if>
       <if test="fullNameLikeIgnoreCase != null">
-        and (lower(RES.FIRST_) like #{fullNameLikeIgnoreCase}${wildcardEscapeClause} or lower(RES.LAST_) like #{fullNameLikeIgnoreCase}${wildcardEscapeClause})
+        and (lower(CONCAT(CONCAT(RES.FIRST_ , ' '), RES.LAST_)) like #{fullNameLikeIgnoreCase}${wildcardEscapeClause})
       </if>
       <if test="email != null">
         and RES.EMAIL_ = #{email}

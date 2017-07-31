@@ -12,17 +12,22 @@
  */
 package org.flowable.bpmn.converter.export;
 
+import java.util.List;
+import java.util.Map;
+
 import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.constants.BpmnXMLConstants;
 import org.flowable.bpmn.converter.util.BpmnXMLUtil;
 import org.flowable.bpmn.model.Activity;
+import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.bpmn.model.ExtensionElement;
 import org.flowable.bpmn.model.MultiInstanceLoopCharacteristics;
 
 public class MultiInstanceExport implements BpmnXMLConstants {
 
-    public static void writeMultiInstance(Activity activity, XMLStreamWriter xtw) throws Exception {
+    public static void writeMultiInstance(Activity activity, BpmnModel model, XMLStreamWriter xtw) throws Exception {
         if (activity.getLoopCharacteristics() != null) {
             MultiInstanceLoopCharacteristics multiInstanceObject = activity.getLoopCharacteristics();
             if (StringUtils.isNotEmpty(multiInstanceObject.getLoopCardinality()) || StringUtils.isNotEmpty(multiInstanceObject.getInputDataItem())
@@ -45,6 +50,12 @@ public class MultiInstanceExport implements BpmnXMLConstants {
                     xtw.writeStartElement(ELEMENT_MULTIINSTANCE_CONDITION);
                     xtw.writeCharacters(multiInstanceObject.getCompletionCondition());
                     xtw.writeEndElement();
+                }
+
+                // check for extension elements
+                Map<String, List<ExtensionElement>> extensions = multiInstanceObject.getExtensionElements();
+                if (!extensions.isEmpty()) {
+                	BpmnXMLUtil.writeExtensionElements(multiInstanceObject, false, model.getNamespaces(), xtw);
                 }
                 xtw.writeEndElement();
             }

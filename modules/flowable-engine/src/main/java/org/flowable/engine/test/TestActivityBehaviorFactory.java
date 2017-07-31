@@ -28,6 +28,7 @@ import org.flowable.bpmn.model.CompensateEventDefinition;
 import org.flowable.bpmn.model.EndEvent;
 import org.flowable.bpmn.model.ErrorEventDefinition;
 import org.flowable.bpmn.model.EventGateway;
+import org.flowable.bpmn.model.EventSubProcess;
 import org.flowable.bpmn.model.ExclusiveGateway;
 import org.flowable.bpmn.model.InclusiveGateway;
 import org.flowable.bpmn.model.IntermediateCatchEvent;
@@ -60,6 +61,7 @@ import org.flowable.engine.impl.bpmn.behavior.CallActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.CancelEndEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.ErrorEndEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.EventBasedGatewayActivityBehavior;
+import org.flowable.engine.impl.bpmn.behavior.EventSubProcessActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.EventSubProcessErrorStartEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.EventSubProcessMessageStartEventActivityBehavior;
 import org.flowable.engine.impl.bpmn.behavior.EventSubProcessSignalStartEventActivityBehavior;
@@ -110,9 +112,9 @@ public class TestActivityBehaviorFactory extends AbstractBehaviorFactory impleme
     protected ActivityBehaviorFactory wrappedActivityBehaviorFactory;
 
     protected boolean allServiceTasksNoOp;
-    protected Map<String, String> mockedClassDelegatesMapping = new HashMap<String, String>();
-    protected Set<String> noOpServiceTaskIds = new HashSet<String>();
-    protected Set<String> noOpServiceTaskClassNames = new HashSet<String>();
+    protected Map<String, String> mockedClassDelegatesMapping = new HashMap<>();
+    protected Set<String> noOpServiceTaskIds = new HashSet<>();
+    protected Set<String> noOpServiceTaskClassNames = new HashSet<>();
 
     public TestActivityBehaviorFactory() {
 
@@ -172,7 +174,7 @@ public class TestActivityBehaviorFactory extends AbstractBehaviorFactory impleme
     }
 
     private ClassDelegate createNoOpServiceTask(ServiceTask serviceTask) {
-        List<FieldDeclaration> fieldDeclarations = new ArrayList<FieldDeclaration>();
+        List<FieldDeclaration> fieldDeclarations = new ArrayList<>();
         fieldDeclarations.add(new FieldDeclaration("name", Expression.class.getName(), new FixedValue(serviceTask.getImplementation())));
         return new ClassDelegate(NoOpServiceTask.class, fieldDeclarations);
     }
@@ -243,6 +245,11 @@ public class TestActivityBehaviorFactory extends AbstractBehaviorFactory impleme
     }
 
     @Override
+    public ActivityBehavior createHttpActivityBehavior(ServiceTask serviceTask) {
+        return wrappedActivityBehaviorFactory.createHttpActivityBehavior(serviceTask);
+    }
+
+    @Override
     public ActivityBehavior createBusinessRuleTaskActivityBehavior(BusinessRuleTask businessRuleTask) {
         return wrappedActivityBehaviorFactory.createBusinessRuleTaskActivityBehavior(businessRuleTask);
     }
@@ -285,6 +292,11 @@ public class TestActivityBehaviorFactory extends AbstractBehaviorFactory impleme
     @Override
     public SubProcessActivityBehavior createSubprocessActivityBehavior(SubProcess subProcess) {
         return wrappedActivityBehaviorFactory.createSubprocessActivityBehavior(subProcess);
+    }
+    
+    @Override
+    public EventSubProcessActivityBehavior createEventSubprocessActivityBehavior(EventSubProcess eventSubProcess) {
+        return wrappedActivityBehaviorFactory.createEventSubprocessActivityBehavior(eventSubProcess);
     }
 
     @Override

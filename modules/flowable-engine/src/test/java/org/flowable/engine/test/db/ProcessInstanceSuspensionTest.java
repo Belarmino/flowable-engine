@@ -1,3 +1,15 @@
+/* Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.flowable.engine.test.db;
 
 import java.util.Calendar;
@@ -5,11 +17,12 @@ import java.util.Date;
 import java.util.List;
 
 import org.flowable.engine.common.impl.Page;
-import org.flowable.engine.impl.interceptor.Command;
-import org.flowable.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.interceptor.CommandExecutor;
+import org.flowable.engine.common.impl.interceptor.Command;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 import org.flowable.engine.impl.persistence.entity.TimerJobEntity;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.Job;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -136,7 +149,7 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
         processEngineConfiguration.getCommandExecutor().execute(new Command<Void>() {
             public Void execute(CommandContext commandContext) {
                 Date currentTime = processEngineConfiguration.getClock().getCurrentTime();
-                commandContext.getTimerJobEntityManager().findById(job.getId()).setDuedate(new Date(currentTime.getTime() - 10000));
+                CommandContextUtil.getTimerJobEntityManager(commandContext).findById(job.getId()).setDuedate(new Date(currentTime.getTime() - 10000));
                 return null;
             }
 
@@ -146,7 +159,7 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
     protected List<TimerJobEntity> executeAcquireJobsCommand() {
         return processEngineConfiguration.getCommandExecutor().execute(new Command<List<TimerJobEntity>>() {
             public List<TimerJobEntity> execute(CommandContext commandContext) {
-                return commandContext.getTimerJobEntityManager().findTimerJobsToExecute(new Page(0, 1));
+                return CommandContextUtil.getTimerJobEntityManager(commandContext).findTimerJobsToExecute(new Page(0, 1));
             }
 
         });

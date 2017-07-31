@@ -24,6 +24,7 @@ import java.util.UUID;
 import org.flowable.engine.history.HistoricVariableInstance;
 import org.flowable.engine.impl.history.HistoryLevel;
 import org.flowable.engine.impl.persistence.entity.VariableInstance;
+import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.impl.variable.ValueFields;
 import org.flowable.engine.impl.variable.VariableType;
@@ -45,7 +46,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         processEngineConfiguration.getVariableTypes().addType(CustomVariableType.instance);
 
         Date now = new Date();
-        List<String> serializable = new ArrayList<String>();
+        List<String> serializable = new ArrayList<>();
         serializable.add("one");
         serializable.add("two");
         serializable.add("three");
@@ -75,7 +76,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         long4001StringBuilder.append("a");
 
         // Start process instance with different types of variables
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put("longVar", 928374L);
         variables.put("shortVar", (short) 123);
         variables.put("integerVar", 1234);
@@ -162,7 +163,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertEquals(new CustomType(bytes1), variables.get("customVar2"));
         assertEquals(13, variables.size());
 
-        Collection<String> varFilter = new ArrayList<String>(2);
+        Collection<String> varFilter = new ArrayList<>(2);
         varFilter.add("stringVar");
         varFilter.add("integerVar");
 
@@ -185,7 +186,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
     @Deployment
     public void testLocalizeVariables() {
         // Start process instance with different types of variables
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put("stringVar", "coca-cola");
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("localizeVariables", variables);
 
@@ -194,7 +195,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertEquals("stringVar", variableInstances.get("stringVar").getName());
         assertEquals("coca-cola", variableInstances.get("stringVar").getValue());
 
-        List<String> variableNames = new ArrayList<String>();
+        List<String> variableNames = new ArrayList<>();
         variableNames.add("stringVar");
 
         // getVariablesInstances via names
@@ -231,7 +232,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertEquals("intVar", variableInstances.get("intVar").getName());
         assertNull(variableInstances.get("intVar").getValue());
 
-        variableNames = new ArrayList<String>();
+        variableNames = new ArrayList<>();
         variableNames.add("stringVar");
 
         // getVariablesInstances via names
@@ -264,7 +265,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
     @Deployment
     public void testLocalizeDataObjects() {
         // Start process instance with different types of variables
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put("stringVar", "coca-cola");
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("localizeVariables", variables);
         Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
@@ -359,7 +360,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertEquals(processInstance.getId(), dataObjects.get("stringVar").getExecutionId());
         assertNotNull(dataObjects.get("stringVar").getId());
 
-        List<String> variableNames = new ArrayList<String>();
+        List<String> variableNames = new ArrayList<>();
         variableNames.add("stringVar");
 
         // getDataObjects via names
@@ -1500,7 +1501,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         assertNotNull(dataObjects.get("intVar").getId());
         assertNotNull(dataObjects.get("stringVar").getId());
 
-        variableNames = new ArrayList<String>();
+        variableNames = new ArrayList<>();
         variableNames.add("stringVar");
 
         // getDataObjects via names
@@ -1696,14 +1697,14 @@ public class VariablesTest extends PluggableFlowableTestCase {
     public void testChangeVariableType() {
 
         Date now = new Date();
-        List<String> serializable = new ArrayList<String>();
+        List<String> serializable = new ArrayList<>();
         serializable.add("one");
         serializable.add("two");
         serializable.add("three");
         byte[] bytes = "somebytes".getBytes();
 
         // Start process instance with different types of variables
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         variables.put("longVar", 928374L);
         variables.put("shortVar", (short) 123);
         variables.put("integerVar", 1234);
@@ -1727,12 +1728,12 @@ public class VariablesTest extends PluggableFlowableTestCase {
 
         // check if the id of the variable is the same or not
 
-        if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.AUDIT)) {
+        if (HistoryTestHelper.isHistoryLevelAtLeast(HistoryLevel.AUDIT, processEngineConfiguration)) {
             String oldSerializableVarId = getVariableInstanceId(processInstance.getId(), "serializableVar");
             String oldLongVar = getVariableInstanceId(processInstance.getId(), "longVar");
 
             // Change type of serializableVar from serializable to Short
-            Map<String, Object> newVariables = new HashMap<String, Object>();
+            Map<String, Object> newVariables = new HashMap<>();
             newVariables.put("serializableVar", (short) 222);
             runtimeService.setVariables(processInstance.getId(), newVariables);
             variables = runtimeService.getVariables(processInstance.getId());
@@ -1743,7 +1744,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
             assertEquals(oldSerializableVarId, newSerializableVarId);
 
             // Change type of a longVar from Long to Short
-            newVariables = new HashMap<String, Object>();
+            newVariables = new HashMap<>();
             newVariables.put("longVar", (short) 123);
             runtimeService.setVariables(processInstance.getId(), newVariables);
             variables = runtimeService.getVariables(processInstance.getId());
@@ -1760,7 +1761,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("taskAssigneeProcess");
         Task task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
 
-        Map<String, String> variables = new HashMap<String, String>();
+        Map<String, String> variables = new HashMap<>();
         variables.put("testProperty", "434");
 
         formService.submitTaskFormData(task.getId(), variables);
@@ -1774,7 +1775,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         // If no variable is given, no variable should be set and script test should throw exception
         processInstance = runtimeService.startProcessInstanceByKey("taskAssigneeProcess");
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
-        variables = new HashMap<String, String>();
+        variables = new HashMap<>();
         try {
             formService.submitTaskFormData(task.getId(), variables);
             fail("Should throw exception as testProperty is not defined and used in Script task");
@@ -1787,7 +1788,7 @@ public class VariablesTest extends PluggableFlowableTestCase {
         // No we put null property, This should be put into the variable. We do not expect exceptions
         processInstance = runtimeService.startProcessInstanceByKey("taskAssigneeProcess");
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
-        variables = new HashMap<String, String>();
+        variables = new HashMap<>();
         variables.put("testProperty", null);
 
         try {

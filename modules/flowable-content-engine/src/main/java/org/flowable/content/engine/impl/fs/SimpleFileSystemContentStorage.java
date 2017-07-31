@@ -43,7 +43,7 @@ import com.fasterxml.uuid.impl.TimeBasedGenerator;
  */
 public class SimpleFileSystemContentStorage implements ContentStorage {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleFileSystemContentStorage.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleFileSystemContentStorage.class);
 
     private static TimeBasedGenerator UUID_GENERATOR = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
 
@@ -79,9 +79,9 @@ public class SimpleFileSystemContentStorage implements ContentStorage {
         if (!subFolder.exists()) {
             boolean created = subFolder.mkdir();
             if (created) {
-                LOG.info("Created content folder in {}", subFolder.getAbsolutePath());
+                LOGGER.info("Created content folder in {}", subFolder.getAbsolutePath());
             } else {
-                LOG.warn("Could not create content folder. This might impact the storage of related content");
+                LOGGER.warn("Could not create content folder. This might impact the storage of related content");
             }
         }
         return subFolder;

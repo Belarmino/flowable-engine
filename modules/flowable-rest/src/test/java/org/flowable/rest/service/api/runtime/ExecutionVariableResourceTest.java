@@ -136,11 +136,13 @@ public class ExecutionVariableResourceTest extends BaseSpringRestTestCase {
 
         CloseableHttpResponse response = executeRequest(new HttpGet(SERVER_URL_PREFIX + RestUrls.createRelativeResourceUrl(RestUrls.URL_EXECUTION_VARIABLE_DATA, processInstance.getId(), "var")),
                 HttpStatus.SC_OK);
-        closeResponse(response);
 
         // Read the serializable from the stream
         ObjectInputStream stream = new ObjectInputStream(response.getEntity().getContent());
         Object readSerializable = stream.readObject();
+        
+        closeResponse(response);
+        
         assertNotNull(readSerializable);
         assertTrue(readSerializable instanceof TestSerializableVariable);
         assertEquals("This is some field", ((TestSerializableVariable) readSerializable).getSomeField());
@@ -280,7 +282,7 @@ public class ExecutionVariableResourceTest extends BaseSpringRestTestCase {
         InputStream binaryContent = new ByteArrayInputStream("This is binary content".getBytes());
 
         // Add name and type
-        Map<String, String> additionalFields = new HashMap<String, String>();
+        Map<String, String> additionalFields = new HashMap<>();
         additionalFields.put("name", "binaryVariable");
         additionalFields.put("type", "binary");
 

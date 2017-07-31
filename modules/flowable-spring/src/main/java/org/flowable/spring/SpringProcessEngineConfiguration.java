@@ -23,9 +23,9 @@ import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.ProcessEngines;
 import org.flowable.engine.common.api.FlowableException;
 import org.flowable.engine.common.impl.interceptor.CommandConfig;
+import org.flowable.engine.common.impl.interceptor.CommandInterceptor;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.cfg.StandaloneProcessEngineConfiguration;
-import org.flowable.engine.impl.interceptor.CommandInterceptor;
 import org.flowable.engine.impl.variable.EntityManagerSession;
 import org.flowable.spring.autodeployment.AutoDeploymentStrategy;
 import org.flowable.spring.autodeployment.DefaultAutoDeploymentStrategy;
@@ -53,7 +53,7 @@ public class SpringProcessEngineConfiguration extends ProcessEngineConfiguration
     protected String deploymentMode = "default";
     protected ApplicationContext applicationContext;
     protected Integer transactionSynchronizationAdapterOrder;
-    private Collection<AutoDeploymentStrategy> deploymentStrategies = new ArrayList<AutoDeploymentStrategy>();
+    private Collection<AutoDeploymentStrategy> deploymentStrategies = new ArrayList<>();
 
     public SpringProcessEngineConfiguration() {
         this.transactionsExternallyManaged = true;

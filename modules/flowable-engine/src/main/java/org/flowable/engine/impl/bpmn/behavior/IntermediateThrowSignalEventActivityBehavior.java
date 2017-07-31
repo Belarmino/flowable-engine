@@ -19,15 +19,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.Signal;
 import org.flowable.bpmn.model.SignalEventDefinition;
 import org.flowable.bpmn.model.ThrowEvent;
+import org.flowable.engine.common.impl.context.Context;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.compatibility.Flowable5CompatibilityHandler;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.Expression;
 import org.flowable.engine.delegate.event.FlowableEngineEventType;
 import org.flowable.engine.delegate.event.impl.FlowableEventBuilder;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.persistence.entity.EventSubscriptionEntityManager;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.persistence.entity.SignalEventSubscriptionEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
+import org.flowable.engine.impl.util.Flowable5Util;
 
 /**
  * @author Tijs Rademakers
@@ -64,11 +67,11 @@ public class IntermediateThrowSignalEventActivityBehavior extends AbstractBpmnAc
         if (signalEventName != null) {
             eventSubscriptionName = signalEventName;
         } else {
-            Expression expressionObject = commandContext.getProcessEngineConfiguration().getExpressionManager().createExpression(signalExpression);
+            Expression expressionObject = CommandContextUtil.getProcessEngineConfiguration(commandContext).getExpressionManager().createExpression(signalExpression);
             eventSubscriptionName = expressionObject.getValue(execution).toString();
         }
 
-        EventSubscriptionEntityManager eventSubscriptionEntityManager = commandContext.getEventSubscriptionEntityManager();
+        EventSubscriptionEntityManager eventSubscriptionEntityManager = CommandContextUtil.getEventSubscriptionEntityManager(commandContext);
         List<SignalEventSubscriptionEntity> subscriptionEntities = null;
         if (processInstanceScope) {
             subscriptionEntities = eventSubscriptionEntityManager
@@ -79,15 +82,21 @@ public class IntermediateThrowSignalEventActivityBehavior extends AbstractBpmnAc
         }
 
         for (SignalEventSubscriptionEntity signalEventSubscriptionEntity : subscriptionEntities) {
-            Context.getProcessEngineConfiguration().getEventDispatcher().dispatchEvent(
+            CommandContextUtil.getProcessEngineConfiguration().getEventDispatcher().dispatchEvent(
                     FlowableEventBuilder.createSignalEvent(FlowableEngineEventType.ACTIVITY_SIGNALED, signalEventSubscriptionEntity.getActivityId(), eventSubscriptionName,
                             null, signalEventSubscriptionEntity.getExecutionId(), signalEventSubscriptionEntity.getProcessInstanceId(),
                             signalEventSubscriptionEntity.getProcessDefinitionId()));
 
-            eventSubscriptionEntityManager.eventReceived(signalEventSubscriptionEntity, null, signalEventDefinition.isAsync());
+            if (Flowable5Util.isFlowable5ProcessDefinitionId(commandContext, signalEventSubscriptionEntity.getProcessDefinitionId())) {
+                Flowable5CompatibilityHandler compatibilityHandler = Flowable5Util.getFlowable5CompatibilityHandler();
+                compatibilityHandler.signalEventReceived(signalEventSubscriptionEntity, null, signalEventDefinition.isAsync());
+                
+            } else {
+                eventSubscriptionEntityManager.eventReceived(signalEventSubscriptionEntity, null, signalEventDefinition.isAsync());
+            }
         }
 
-        commandContext.getAgenda().planTakeOutgoingSequenceFlowsOperation((ExecutionEntity) execution, true);
+        CommandContextUtil.getAgenda(commandContext).planTakeOutgoingSequenceFlowsOperation((ExecutionEntity) execution, true);
     }
 
 }

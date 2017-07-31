@@ -43,7 +43,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  */
 public abstract class AbstractProcessEngineConfiguration {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractProcessEngineConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractProcessEngineConfiguration.class);
 
     public ProcessEngineFactoryBean springProcessEngineBean(SpringProcessEngineConfiguration configuration) {
         ProcessEngineFactoryBean processEngineFactoryBean = new ProcessEngineFactoryBean();
@@ -74,7 +74,7 @@ public abstract class AbstractProcessEngineConfiguration {
     public List<Resource> discoverProcessDefinitionResources(ResourcePatternResolver applicationContext, String prefix, List<String> suffixes, boolean checkPDs) throws IOException {
         if (checkPDs) {
 
-            List<Resource> result = new ArrayList<Resource>();
+            List<Resource> result = new ArrayList<>();
             for (String suffix : suffixes) {
                 String path = prefix + suffix;
                 Resource[] resources = applicationContext.getResources(path);
@@ -84,12 +84,12 @@ public abstract class AbstractProcessEngineConfiguration {
             }
 
             if (result.isEmpty()) {
-                logger.info("No process definitions were found for autodeployment");
+                LOGGER.info("No process definitions were found for autodeployment");
             }
 
             return result;
         }
-        return new ArrayList<Resource>();
+        return new ArrayList<>();
     }
 
     public RuntimeService runtimeServiceBean(ProcessEngine processEngine) {

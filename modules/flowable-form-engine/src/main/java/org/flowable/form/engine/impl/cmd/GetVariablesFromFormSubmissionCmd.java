@@ -19,9 +19,9 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.flowable.engine.common.impl.interceptor.Command;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.form.engine.FlowableFormValidationException;
-import org.flowable.form.engine.impl.interceptor.Command;
-import org.flowable.form.engine.impl.interceptor.CommandContext;
 import org.flowable.form.model.FormField;
 import org.flowable.form.model.FormFieldTypes;
 import org.flowable.form.model.FormModel;
@@ -56,7 +56,7 @@ public class GetVariablesFromFormSubmissionCmd implements Command<Map<String, Ob
 
         // Loop over all form fields and see if a value was provided
         Map<String, FormField> fieldMap = formDefinition.allFieldsAsMap();
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         for (String fieldId : fieldMap.keySet()) {
             Object variableValue = null;
             FormField formField = fieldMap.get(fieldId);

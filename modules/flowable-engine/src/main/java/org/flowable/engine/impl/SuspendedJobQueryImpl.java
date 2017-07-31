@@ -18,10 +18,9 @@ import java.util.Date;
 import java.util.List;
 
 import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.Page;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.interceptor.CommandExecutor;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandExecutor;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.runtime.Job;
 import org.flowable.engine.runtime.SuspendedJobQuery;
 
@@ -238,12 +237,12 @@ public class SuspendedJobQueryImpl extends AbstractQuery<SuspendedJobQuery, Job>
 
     public long executeCount(CommandContext commandContext) {
         checkQueryOk();
-        return commandContext.getSuspendedJobEntityManager().findJobCountByQueryCriteria(this);
+        return CommandContextUtil.getSuspendedJobEntityManager(commandContext).findJobCountByQueryCriteria(this);
     }
 
-    public List<Job> executeList(CommandContext commandContext, Page page) {
+    public List<Job> executeList(CommandContext commandContext) {
         checkQueryOk();
-        return commandContext.getSuspendedJobEntityManager().findJobsByQueryCriteria(this, page);
+        return CommandContextUtil.getSuspendedJobEntityManager(commandContext).findJobsByQueryCriteria(this);
     }
 
     // getters //////////////////////////////////////////
@@ -269,7 +268,7 @@ public class SuspendedJobQueryImpl extends AbstractQuery<SuspendedJobQuery, Job>
     }
 
     public Date getNow() {
-        return Context.getProcessEngineConfiguration().getClock().getCurrentTime();
+        return CommandContextUtil.getProcessEngineConfiguration().getClock().getCurrentTime();
     }
 
     public boolean isWithException() {

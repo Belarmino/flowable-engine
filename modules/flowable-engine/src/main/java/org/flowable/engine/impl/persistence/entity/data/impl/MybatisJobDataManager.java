@@ -70,15 +70,19 @@ public class MybatisJobDataManager extends AbstractDataManager<JobEntity> implem
     @Override
     @SuppressWarnings("unchecked")
     public List<JobEntity> findExpiredJobs(Page page) {
+        Map<String, Object> params = new HashMap<>();
         Date now = getClock().getCurrentTime();
-        return getDbSqlSession().selectList("selectExpiredJobs", now, page);
+        params.put("now", now);
+        Date maxTimeout = new Date(now.getTime() - getProcessEngineConfiguration().getAsyncExecutorResetExpiredJobsMaxTimeout());
+        params.put("maxTimeout", maxTimeout);
+        return getDbSqlSession().selectList("selectExpiredJobs", params, page);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<Job> findJobsByQueryCriteria(JobQueryImpl jobQuery, Page page) {
+    public List<Job> findJobsByQueryCriteria(JobQueryImpl jobQuery) {
         final String query = "selectJobByQueryCriteria";
-        return getDbSqlSession().selectList(query, jobQuery, page);
+        return getDbSqlSession().selectList(query, jobQuery);
     }
 
     @Override
@@ -88,7 +92,7 @@ public class MybatisJobDataManager extends AbstractDataManager<JobEntity> implem
 
     @Override
     public void updateJobTenantIdForDeployment(String deploymentId, String newTenantId) {
-        HashMap<String, Object> params = new HashMap<String, Object>();
+        HashMap<String, Object> params = new HashMap<>();
         params.put("deploymentId", deploymentId);
         params.put("tenantId", newTenantId);
         getDbSqlSession().update("updateJobTenantIdForDeployment", params);
@@ -96,8 +100,9 @@ public class MybatisJobDataManager extends AbstractDataManager<JobEntity> implem
 
     @Override
     public void resetExpiredJob(String jobId) {
-        Map<String, Object> params = new HashMap<String, Object>(2);
+        Map<String, Object> params = new HashMap<>(2);
         params.put("id", jobId);
+        params.put("now", processEngineConfiguration.getClock().getCurrentTime());
         getDbSqlSession().update("resetExpiredJob", params);
     }
 

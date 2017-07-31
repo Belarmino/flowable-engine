@@ -16,11 +16,11 @@ package org.flowable.engine.impl.app;
 import java.util.Map;
 
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
-import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.persistence.deploy.Deployer;
 import org.flowable.engine.impl.persistence.deploy.DeploymentManager;
 import org.flowable.engine.impl.persistence.entity.DeploymentEntity;
 import org.flowable.engine.impl.persistence.entity.ResourceEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,19 +29,19 @@ import org.slf4j.LoggerFactory;
  */
 public class AppDeployer implements Deployer {
 
-    private static final Logger log = LoggerFactory.getLogger(AppDeployer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppDeployer.class);
 
     public void deploy(DeploymentEntity deployment, Map<String, Object> deploymentSettings) {
-        log.debug("Processing app deployment {}", deployment.getName());
+        LOGGER.debug("Processing app deployment {}", deployment.getName());
 
-        ProcessEngineConfigurationImpl processEngineConfiguration = Context.getProcessEngineConfiguration();
+        ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration();
         DeploymentManager deploymentManager = processEngineConfiguration.getDeploymentManager();
 
         Object appResourceObject = null;
         Map<String, ResourceEntity> resources = deployment.getResources();
         for (String resourceName : resources.keySet()) {
             if (resourceName.endsWith(".app")) {
-                log.info("Processing app resource {}", resourceName);
+                LOGGER.info("Processing app resource {}", resourceName);
 
                 ResourceEntity resourceEntity = resources.get(resourceName);
                 byte[] resourceBytes = resourceEntity.getBytes();

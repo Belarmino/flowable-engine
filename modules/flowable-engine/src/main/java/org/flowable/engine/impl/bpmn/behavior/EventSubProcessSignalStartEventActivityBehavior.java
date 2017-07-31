@@ -24,15 +24,16 @@ import org.flowable.bpmn.model.SignalEventDefinition;
 import org.flowable.bpmn.model.StartEvent;
 import org.flowable.bpmn.model.SubProcess;
 import org.flowable.bpmn.model.ValuedDataObject;
+import org.flowable.engine.common.impl.context.Context;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.history.DeleteReason;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.persistence.entity.EventSubscriptionEntity;
 import org.flowable.engine.impl.persistence.entity.EventSubscriptionEntityManager;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntityManager;
 import org.flowable.engine.impl.persistence.entity.SignalEventSubscriptionEntity;
+import org.flowable.engine.impl.util.CommandContextUtil;
 
 /**
  * Implementation of the BPMN 2.0 event subprocess signal start event.
@@ -67,7 +68,7 @@ public class EventSubProcessSignalStartEventActivityBehavior extends AbstractBpm
     @Override
     public void trigger(DelegateExecution execution, String triggerName, Object triggerData) {
         CommandContext commandContext = Context.getCommandContext();
-        ExecutionEntityManager executionEntityManager = commandContext.getExecutionEntityManager();
+        ExecutionEntityManager executionEntityManager = CommandContextUtil.getExecutionEntityManager(commandContext);
         ExecutionEntity executionEntity = (ExecutionEntity) execution;
 
         String eventName = null;
@@ -84,11 +85,11 @@ public class EventSubProcessSignalStartEventActivityBehavior extends AbstractBpm
                 ExecutionEntity childExecutionEntity = childExecutions.get(i);
                 if (!childExecutionEntity.isEnded() && !childExecutionEntity.getId().equals(executionEntity.getId())) {
                     executionEntityManager.deleteExecutionAndRelatedData(childExecutionEntity,
-                            DeleteReason.EVENT_SUBPROCESS_INTERRUPTING + "(" + startEvent.getId() + ")", false);
+                            DeleteReason.EVENT_SUBPROCESS_INTERRUPTING + "(" + startEvent.getId() + ")");
                 }
             }
 
-            EventSubscriptionEntityManager eventSubscriptionEntityManager = Context.getCommandContext().getEventSubscriptionEntityManager();
+            EventSubscriptionEntityManager eventSubscriptionEntityManager = CommandContextUtil.getEventSubscriptionEntityManager(commandContext);
             List<EventSubscriptionEntity> eventSubscriptions = executionEntity.getEventSubscriptions();
 
             for (EventSubscriptionEntity eventSubscription : eventSubscriptions) {
@@ -98,7 +99,7 @@ public class EventSubProcessSignalStartEventActivityBehavior extends AbstractBpm
                 }
             }
         }
-
+        
         ExecutionEntity newSubProcessExecution = executionEntityManager.createChildExecution(executionEntity.getParent());
         newSubProcessExecution.setCurrentFlowElement((SubProcess) executionEntity.getCurrentFlowElement().getParentContainer());
         newSubProcessExecution.setEventScope(false);
@@ -106,12 +107,14 @@ public class EventSubProcessSignalStartEventActivityBehavior extends AbstractBpm
 
         ExecutionEntity outgoingFlowExecution = executionEntityManager.createChildExecution(newSubProcessExecution);
         outgoingFlowExecution.setCurrentFlowElement(startEvent);
+        
+        CommandContextUtil.getHistoryManager(commandContext).recordActivityStart(outgoingFlowExecution);
 
         leave(outgoingFlowExecution);
     }
 
     protected Map<String, Object> processDataObjects(Collection<ValuedDataObject> dataObjects) {
-        Map<String, Object> variablesMap = new HashMap<String, Object>();
+        Map<String, Object> variablesMap = new HashMap<>();
         // convert data objects to process variables
         if (dataObjects != null) {
             for (ValuedDataObject dataObject : dataObjects) {

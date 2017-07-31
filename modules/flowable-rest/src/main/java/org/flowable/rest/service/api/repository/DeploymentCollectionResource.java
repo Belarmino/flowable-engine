@@ -20,7 +20,6 @@ import java.util.zip.ZipInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import io.swagger.annotations.Authorization;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.common.api.FlowableException;
@@ -48,6 +47,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 
 /**
  * @author Tijs Rademakers
@@ -59,7 +59,7 @@ public class DeploymentCollectionResource {
 
     protected static final String DEPRECATED_API_DEPLOYMENT_SEGMENT = "deployment";
 
-    private static Map<String, QueryProperty> allowedSortProperties = new HashMap<String, QueryProperty>();
+    private static Map<String, QueryProperty> allowedSortProperties = new HashMap<>();
 
     static {
         allowedSortProperties.put("id", DeploymentQueryProperty.DEPLOYMENT_ID);
@@ -130,7 +130,10 @@ public class DeploymentCollectionResource {
             @ApiResponse(code = 200, message = "Indicates the deployment was created."),
             @ApiResponse(code = 400, message = "Indicates there was no content present in the request body or the content mime-type is not supported for deployment. The status-description contains additional information.")
     })
-    @RequestMapping(value = "/repository/deployments", method = RequestMethod.POST, produces = "application/json")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name="file", paramType = "form", dataType = "java.io.File")
+    })
+    @RequestMapping(value = "/repository/deployments", method = RequestMethod.POST, produces = "application/json", consumes = "multipart/form-data")
     public DeploymentResponse uploadDeployment(@ApiParam(name = "deploymentKey") @RequestParam(value = "deploymentKey", required = false) String deploymentKey,
             @ApiParam(name = "deploymentName") @RequestParam(value = "deploymentName", required = false) String deploymentName,
             @ApiParam(name = "tenantId") @RequestParam(value = "tenantId", required = false) String tenantId,

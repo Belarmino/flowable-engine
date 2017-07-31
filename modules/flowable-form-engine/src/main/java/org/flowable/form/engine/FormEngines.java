@@ -31,21 +31,21 @@ import java.util.Set;
 import org.apache.commons.io.IOUtils;
 import org.flowable.engine.common.EngineInfo;
 import org.flowable.engine.common.api.FlowableException;
-import org.flowable.form.engine.impl.util.ReflectUtil;
+import org.flowable.engine.common.impl.util.ReflectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class FormEngines {
 
-    private static Logger log = LoggerFactory.getLogger(FormEngines.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FormEngines.class);
 
     public static final String NAME_DEFAULT = "default";
 
     protected static boolean isInitialized;
-    protected static Map<String, FormEngine> formEngines = new HashMap<String, FormEngine>();
-    protected static Map<String, EngineInfo> formEngineInfosByName = new HashMap<String, EngineInfo>();
-    protected static Map<String, EngineInfo> formEngineInfosByResourceUrl = new HashMap<String, EngineInfo>();
-    protected static List<EngineInfo> formEngineInfos = new ArrayList<EngineInfo>();
+    protected static Map<String, FormEngine> formEngines = new HashMap<>();
+    protected static Map<String, EngineInfo> formEngineInfosByName = new HashMap<>();
+    protected static Map<String, EngineInfo> formEngineInfosByResourceUrl = new HashMap<>();
+    protected static List<EngineInfo> formEngineInfos = new ArrayList<>();
 
     /**
      * Initializes all form engines that can be found on the classpath for resources <code>flowable.form.cfg.xml</code> and for resources <code>flowable-dmn-context.xml</code> (Spring style
@@ -55,7 +55,7 @@ public abstract class FormEngines {
         if (!isInitialized()) {
             if (formEngines == null) {
                 // Create new map to store dmn engines if current map is null
-                formEngines = new HashMap<String, FormEngine>();
+                formEngines = new HashMap<>();
             }
             ClassLoader classLoader = FormEngines.class.getClassLoader();
             Enumeration<URL> resources = null;
@@ -67,13 +67,13 @@ public abstract class FormEngines {
 
             // Remove duplicated configuration URL's using set. Some
             // classloaders may return identical URL's twice, causing duplicate startups
-            Set<URL> configUrls = new HashSet<URL>();
+            Set<URL> configUrls = new HashSet<>();
             while (resources.hasMoreElements()) {
                 configUrls.add(resources.nextElement());
             }
             for (Iterator<URL> iterator = configUrls.iterator(); iterator.hasNext();) {
                 URL resource = iterator.next();
-                log.info("Initializing form engine using configuration '{}'", resource.toString());
+                LOGGER.info("Initializing form engine using configuration '{}'", resource.toString());
                 initFormEngineFromResource(resource);
             }
 
@@ -85,13 +85,13 @@ public abstract class FormEngines {
 
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
-                log.info("Initializing form engine using Spring configuration '{}'", resource.toString());
+                LOGGER.info("Initializing form engine using Spring configuration '{}'", resource.toString());
                 initFormEngineFromSpringResource(resource);
             }
 
             setInitialized(true);
         } else {
-            log.info("Form engines already initialized");
+            LOGGER.info("Form engines already initialized");
         }
     }
 
@@ -141,15 +141,15 @@ public abstract class FormEngines {
 
         String resourceUrlString = resourceUrl.toString();
         try {
-            log.info("initializing dmn engine for resource {}", resourceUrl);
+            LOGGER.info("initializing dmn engine for resource {}", resourceUrl);
             FormEngine formEngine = buildFormEngine(resourceUrl);
             String formEngineName = formEngine.getName();
-            log.info("initialised form engine {}", formEngineName);
+            LOGGER.info("initialised form engine {}", formEngineName);
             formEngineInfo = new EngineInfo(formEngineName, resourceUrlString, null);
             formEngines.put(formEngineName, formEngine);
             formEngineInfosByName.put(formEngineName, formEngineInfo);
         } catch (Throwable e) {
-            log.error("Exception while initializing form engine: {}", e.getMessage(), e);
+            LOGGER.error("Exception while initializing form engine: {}", e.getMessage(), e);
             formEngineInfo = new EngineInfo(null, resourceUrlString, getExceptionString(e));
         }
         formEngineInfosByResourceUrl.put(resourceUrlString, formEngineInfo);
@@ -212,7 +212,7 @@ public abstract class FormEngines {
      * retries to initialize a form engine that previously failed.
      */
     public static EngineInfo retry(String resourceUrl) {
-        log.debug("retying initializing of resource {}", resourceUrl);
+        LOGGER.debug("retying initializing of resource {}", resourceUrl);
         try {
             return initFormEngineFromResource(new URL(resourceUrl));
         } catch (MalformedURLException e) {
@@ -232,15 +232,15 @@ public abstract class FormEngines {
      */
     public static synchronized void destroy() {
         if (isInitialized()) {
-            Map<String, FormEngine> engines = new HashMap<String, FormEngine>(formEngines);
-            formEngines = new HashMap<String, FormEngine>();
+            Map<String, FormEngine> engines = new HashMap<>(formEngines);
+            formEngines = new HashMap<>();
 
             for (String formEngineName : engines.keySet()) {
                 FormEngine formEngine = engines.get(formEngineName);
                 try {
                     formEngine.close();
                 } catch (Exception e) {
-                    log.error("exception while closing {}", (formEngineName == null ? "the default form engine" : "form engine " + formEngineName), e);
+                    LOGGER.error("exception while closing {}", (formEngineName == null ? "the default form engine" : "form engine " + formEngineName), e);
                 }
             }
 

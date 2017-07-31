@@ -15,7 +15,7 @@ package org.flowable.engine.test.jobexecutor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.flowable.engine.impl.interceptor.CommandContext;
+import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.jobexecutor.JobHandler;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.persistence.entity.JobEntity;
@@ -23,7 +23,7 @@ import org.junit.Assert;
 
 public class TweetHandler implements JobHandler {
 
-    List<String> messages = new ArrayList<String>();
+    List<String> messages = new ArrayList<>();
 
     public String getType() {
         return "tweet";

@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.flowable.engine.common.impl.db.HasRevision;
+import org.flowable.engine.common.impl.persistence.entity.AlwaysUpdatedPersistentObject;
 import org.flowable.engine.common.impl.persistence.entity.Entity;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.runtime.Execution;
@@ -30,7 +31,7 @@ import org.flowable.engine.runtime.ProcessInstance;
  * @author Joram Barrez
  */
 
-public interface ExecutionEntity extends DelegateExecution, Execution, ProcessInstance, Entity, HasRevision {
+public interface ExecutionEntity extends DelegateExecution, Execution, ProcessInstance, Entity, AlwaysUpdatedPersistentObject, HasRevision {
 
     void setBusinessKey(String businessKey);
 
@@ -123,6 +124,10 @@ public interface ExecutionEntity extends DelegateExecution, Execution, ProcessIn
     void setDeleted(boolean isDeleted);
 
     void forceUpdate();
+    
+    String getStartActivityId();
+
+    void setStartActivityId(String startActivityId);
 
     String getStartUserId();
 

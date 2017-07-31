@@ -29,23 +29,23 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
-import org.flowable.content.engine.impl.util.ReflectUtil;
 import org.flowable.engine.common.EngineInfo;
 import org.flowable.engine.common.api.FlowableException;
+import org.flowable.engine.common.impl.util.ReflectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class ContentEngines {
 
-    private static Logger log = LoggerFactory.getLogger(ContentEngines.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContentEngines.class);
 
     public static final String NAME_DEFAULT = "default";
 
     protected static boolean isInitialized;
-    protected static Map<String, ContentEngine> contentEngines = new HashMap<String, ContentEngine>();
-    protected static Map<String, EngineInfo> contentEngineInfosByName = new HashMap<String, EngineInfo>();
-    protected static Map<String, EngineInfo> contentEngineInfosByResourceUrl = new HashMap<String, EngineInfo>();
-    protected static List<EngineInfo> contentEngineInfos = new ArrayList<EngineInfo>();
+    protected static Map<String, ContentEngine> contentEngines = new HashMap<>();
+    protected static Map<String, EngineInfo> contentEngineInfosByName = new HashMap<>();
+    protected static Map<String, EngineInfo> contentEngineInfosByResourceUrl = new HashMap<>();
+    protected static List<EngineInfo> contentEngineInfos = new ArrayList<>();
 
     /**
      * Initializes all dmn engines that can be found on the classpath for resources <code>flowable.content.cfg.xml</code> and for resources <code>flowable-dmn-context.xml</code> (Spring style
@@ -55,7 +55,7 @@ public abstract class ContentEngines {
         if (!isInitialized()) {
             if (contentEngines == null) {
                 // Create new map to store content engines if current map is null
-                contentEngines = new HashMap<String, ContentEngine>();
+                contentEngines = new HashMap<>();
             }
             ClassLoader classLoader = ContentEngines.class.getClassLoader();
             Enumeration<URL> resources = null;
@@ -67,13 +67,13 @@ public abstract class ContentEngines {
 
             // Remove duplicated configuration URL's using set. Some
             // classloaders may return identical URL's twice, causing duplicate startups
-            Set<URL> configUrls = new HashSet<URL>();
+            Set<URL> configUrls = new HashSet<>();
             while (resources.hasMoreElements()) {
                 configUrls.add(resources.nextElement());
             }
             for (Iterator<URL> iterator = configUrls.iterator(); iterator.hasNext();) {
                 URL resource = iterator.next();
-                log.info("Initializing content engine using configuration '{}'", resource.toString());
+                LOGGER.info("Initializing content engine using configuration '{}'", resource.toString());
                 initContentEngineFromResource(resource);
             }
 
@@ -85,13 +85,13 @@ public abstract class ContentEngines {
 
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
-                log.info("Initializing content engine using Spring configuration '{}'", resource.toString());
+                LOGGER.info("Initializing content engine using Spring configuration '{}'", resource.toString());
                 initContentEngineFromSpringResource(resource);
             }
 
             setInitialized(true);
         } else {
-            log.info("Content engines already initialized");
+            LOGGER.info("Content engines already initialized");
         }
     }
 
@@ -142,16 +142,16 @@ public abstract class ContentEngines {
 
         String resourceUrlString = resourceUrl.toString();
         try {
-            log.info("initializing content engine for resource {}", resourceUrl);
+            LOGGER.info("initializing content engine for resource {}", resourceUrl);
             ContentEngine contentEngine = buildFormEngine(resourceUrl);
             String contentEngineName = contentEngine.getName();
-            log.info("initialised content engine {}", contentEngineName);
+            LOGGER.info("initialised content engine {}", contentEngineName);
             contentEngineInfo = new EngineInfo(contentEngineName, resourceUrlString, null);
             contentEngines.put(contentEngineName, contentEngine);
             contentEngineInfosByName.put(contentEngineName, contentEngineInfo);
 
         } catch (Throwable e) {
-            log.error("Exception while initializing content engine: {}", e.getMessage(), e);
+            LOGGER.error("Exception while initializing content engine: {}", e.getMessage(), e);
             contentEngineInfo = new EngineInfo(null, resourceUrlString, getExceptionString(e));
         }
         contentEngineInfosByResourceUrl.put(resourceUrlString, contentEngineInfo);
@@ -214,7 +214,7 @@ public abstract class ContentEngines {
      * Retries to initialize a content engine that previously failed.
      */
     public static EngineInfo retry(String resourceUrl) {
-        log.debug("retying initializing of resource {}", resourceUrl);
+        LOGGER.debug("retying initializing of resource {}", resourceUrl);
         try {
             return initContentEngineFromResource(new URL(resourceUrl));
         } catch (MalformedURLException e) {
@@ -234,15 +234,15 @@ public abstract class ContentEngines {
      */
     public static synchronized void destroy() {
         if (isInitialized()) {
-            Map<String, ContentEngine> engines = new HashMap<String, ContentEngine>(contentEngines);
-            contentEngines = new HashMap<String, ContentEngine>();
+            Map<String, ContentEngine> engines = new HashMap<>(contentEngines);
+            contentEngines = new HashMap<>();
 
             for (String contentEngineName : engines.keySet()) {
                 ContentEngine contentEngine = engines.get(contentEngineName);
                 try {
                     contentEngine.close();
                 } catch (Exception e) {
-                    log.error("exception while closing {}", (contentEngineName == null ? "the default content engine" : "content engine " + contentEngineName), e);
+                    LOGGER.error("exception while closing {}", (contentEngineName == null ? "the default content engine" : "content engine " + contentEngineName), e);
                 }
             }
 

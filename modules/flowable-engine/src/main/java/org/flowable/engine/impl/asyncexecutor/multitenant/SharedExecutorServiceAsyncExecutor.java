@@ -23,7 +23,7 @@ import org.flowable.engine.impl.asyncexecutor.ExecuteAsyncRunnableFactory;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.cfg.multitenant.TenantInfoHolder;
 import org.flowable.engine.impl.cmd.UnacquireOwnedJobsCmd;
-import org.flowable.engine.runtime.Job;
+import org.flowable.engine.runtime.JobInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,18 +36,18 @@ import org.slf4j.LoggerFactory;
  */
 public class SharedExecutorServiceAsyncExecutor extends DefaultAsyncJobExecutor implements TenantAwareAsyncExecutor {
 
-    private static final Logger logger = LoggerFactory.getLogger(SharedExecutorServiceAsyncExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SharedExecutorServiceAsyncExecutor.class);
 
     protected TenantInfoHolder tenantInfoHolder;
 
-    protected Map<String, Thread> timerJobAcquisitionThreads = new HashMap<String, Thread>();
-    protected Map<String, TenantAwareAcquireTimerJobsRunnable> timerJobAcquisitionRunnables = new HashMap<String, TenantAwareAcquireTimerJobsRunnable>();
+    protected Map<String, Thread> timerJobAcquisitionThreads = new HashMap<>();
+    protected Map<String, TenantAwareAcquireTimerJobsRunnable> timerJobAcquisitionRunnables = new HashMap<>();
 
-    protected Map<String, Thread> asyncJobAcquisitionThreads = new HashMap<String, Thread>();
-    protected Map<String, TenantAwareAcquireAsyncJobsDueRunnable> asyncJobAcquisitionRunnables = new HashMap<String, TenantAwareAcquireAsyncJobsDueRunnable>();
+    protected Map<String, Thread> asyncJobAcquisitionThreads = new HashMap<>();
+    protected Map<String, TenantAwareAcquireAsyncJobsDueRunnable> asyncJobAcquisitionRunnables = new HashMap<>();
 
-    protected Map<String, Thread> resetExpiredJobsThreads = new HashMap<String, Thread>();
-    protected Map<String, TenantAwareResetExpiredJobsRunnable> resetExpiredJobsRunnables = new HashMap<String, TenantAwareResetExpiredJobsRunnable>();
+    protected Map<String, Thread> resetExpiredJobsThreads = new HashMap<>();
+    protected Map<String, TenantAwareResetExpiredJobsRunnable> resetExpiredJobsRunnables = new HashMap<>();
 
     public SharedExecutorServiceAsyncExecutor(TenantInfoHolder tenantInfoHolder) {
         this.tenantInfoHolder = tenantInfoHolder;
@@ -55,7 +55,7 @@ public class SharedExecutorServiceAsyncExecutor extends DefaultAsyncJobExecutor 
         setExecuteAsyncRunnableFactory(new ExecuteAsyncRunnableFactory() {
 
             @Override
-            public Runnable createExecuteAsyncRunnable(Job job, ProcessEngineConfigurationImpl processEngineConfiguration) {
+            public Runnable createExecuteAsyncRunnable(JobInfo job, ProcessEngineConfigurationImpl processEngineConfiguration) {
 
                 // Here, the runnable will be created by for example the acquire thread, which has already set the current id.
                 // But it will be executed later on, by the executorService and thus we need to set it explicitly again then
@@ -144,19 +144,19 @@ public class SharedExecutorServiceAsyncExecutor extends DefaultAsyncJobExecutor 
         try {
             timerJobAcquisitionThreads.get(tenantId).join();
         } catch (InterruptedException e) {
-            logger.warn("Interrupted while waiting for the timer job acquisition thread to terminate", e);
+            LOGGER.warn("Interrupted while waiting for the timer job acquisition thread to terminate", e);
         }
 
         try {
             asyncJobAcquisitionThreads.get(tenantId).join();
         } catch (InterruptedException e) {
-            logger.warn("Interrupted while waiting for the timer job acquisition thread to terminate", e);
+            LOGGER.warn("Interrupted while waiting for the timer job acquisition thread to terminate", e);
         }
 
         try {
             resetExpiredJobsThreads.get(tenantId).join();
         } catch (InterruptedException e) {
-            logger.warn("Interrupted while waiting for the reset expired jobs thread to terminate", e);
+            LOGGER.warn("Interrupted while waiting for the reset expired jobs thread to terminate", e);
         }
     }
 

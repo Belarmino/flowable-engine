@@ -21,14 +21,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.impl.context.Context;
-import org.flowable.engine.impl.db.BulkDeleteable;
+import org.flowable.engine.common.impl.context.Context;
+import org.flowable.engine.impl.util.CommandContextUtil;
 
 /**
  * @author Tom Baeyens
  * @author Joram Barrez
  */
-public class HistoricTaskInstanceEntityImpl extends HistoricScopeInstanceEntityImpl implements HistoricTaskInstanceEntity, BulkDeleteable {
+public class HistoricTaskInstanceEntityImpl extends HistoricScopeInstanceEntityImpl implements HistoricTaskInstanceEntity {
 
     private static final long serialVersionUID = 1L;
 
@@ -47,6 +47,7 @@ public class HistoricTaskInstanceEntityImpl extends HistoricScopeInstanceEntityI
     protected Date claimTime;
     protected String category;
     protected String tenantId = ProcessEngineConfiguration.NO_TENANT_ID;
+    protected Date lastUpdateTime;
     protected List<HistoricVariableInstanceEntity> queryVariables;
     protected List<HistoricIdentityLinkEntity> queryIdentityLinks;
     protected List<HistoricIdentityLinkEntity> identityLinks = new ArrayList<>();
@@ -68,8 +69,9 @@ public class HistoricTaskInstanceEntityImpl extends HistoricScopeInstanceEntityI
         this.description = task.getDescription();
         this.owner = task.getOwner();
         this.assignee = task.getAssignee();
-        this.startTime = Context.getProcessEngineConfiguration().getClock().getCurrentTime();
+        this.startTime = CommandContextUtil.getProcessEngineConfiguration().getClock().getCurrentTime();
         this.taskDefinitionKey = task.getTaskDefinitionKey();
+        this.formKey = task.getFormKey();
 
         this.setPriority(task.getPriority());
         this.setDueDate(task.getDueDate());
@@ -84,7 +86,7 @@ public class HistoricTaskInstanceEntityImpl extends HistoricScopeInstanceEntityI
     // persistence //////////////////////////////////////////////////////////////
 
     public Object getPersistentState() {
-        Map<String, Object> persistentState = new HashMap<String, Object>();
+        Map<String, Object> persistentState = new HashMap<>();
         persistentState.put("name", name);
         persistentState.put("owner", owner);
         persistentState.put("assignee", assignee);
@@ -96,16 +98,12 @@ public class HistoricTaskInstanceEntityImpl extends HistoricScopeInstanceEntityI
         persistentState.put("formKey", formKey);
         persistentState.put("priority", priority);
         persistentState.put("category", category);
+        persistentState.put("executionId", executionId);
         persistentState.put("processDefinitionId", processDefinitionId);
-        if (parentTaskId != null) {
-            persistentState.put("parentTaskId", parentTaskId);
-        }
-        if (dueDate != null) {
-            persistentState.put("dueDate", dueDate);
-        }
-        if (claimTime != null) {
-            persistentState.put("claimTime", claimTime);
-        }
+        persistentState.put("parentTaskId", parentTaskId);
+        persistentState.put("dueDate", dueDate);
+        persistentState.put("claimTime", claimTime);
+        persistentState.put("lastUpdateTime", lastUpdateTime);
         return persistentState;
     }
 
@@ -247,8 +245,16 @@ public class HistoricTaskInstanceEntityImpl extends HistoricScopeInstanceEntityI
         return endTime.getTime() - claimTime.getTime();
     }
 
+    public Date getLastUpdateTime() {
+        return lastUpdateTime;
+    }
+
+    public void setLastUpdateTime(Date lastUpdateTime) {
+        this.lastUpdateTime = lastUpdateTime;
+    }
+
     public Map<String, Object> getTaskLocalVariables() {
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         if (queryVariables != null) {
             for (HistoricVariableInstanceEntity variableInstance : queryVariables) {
                 if (variableInstance.getId() != null && variableInstance.getTaskId() != null) {
@@ -260,7 +266,7 @@ public class HistoricTaskInstanceEntityImpl extends HistoricScopeInstanceEntityI
     }
 
     public Map<String, Object> getProcessVariables() {
-        Map<String, Object> variables = new HashMap<String, Object>();
+        Map<String, Object> variables = new HashMap<>();
         if (queryVariables != null) {
             for (HistoricVariableInstanceEntity variableInstance : queryVariables) {
                 if (variableInstance.getId() != null && variableInstance.getTaskId() == null) {
@@ -286,7 +292,7 @@ public class HistoricTaskInstanceEntityImpl extends HistoricScopeInstanceEntityI
     public List<HistoricIdentityLinkEntity> getIdentityLinks() {
         if (!isIdentityLinksInitialized) {
             if (queryIdentityLinks == null) {
-                identityLinks = Context.getCommandContext().getHistoricIdentityLinkEntityManager().findHistoricIdentityLinksByTaskId(id);
+                identityLinks = CommandContextUtil.getHistoricIdentityLinkEntityManager().findHistoricIdentityLinksByTaskId(id);
             } else {
                 identityLinks = queryIdentityLinks;
             }
