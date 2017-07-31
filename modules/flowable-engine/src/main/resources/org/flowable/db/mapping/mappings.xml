@@ -31,6 +31,7 @@
     <mapper resource="org/flowable/db/mapping/entity/IdentityLink.xml" />
     <mapper resource="org/flowable/db/mapping/entity/Job.xml" />
     <mapper resource="org/flowable/db/mapping/entity/Model.xml" />
+    <mapper resource="org/flowable/db/mapping/entity/ModelReport.xml" />
     <mapper resource="org/flowable/db/mapping/entity/ProcessDefinition.xml" />
     <mapper resource="org/flowable/db/mapping/entity/ProcessDefinitionInfo.xml" />
     <mapper resource="org/flowable/db/mapping/entity/Property.xml" />

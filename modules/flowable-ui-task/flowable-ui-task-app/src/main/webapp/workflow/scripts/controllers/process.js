@@ -46,15 +46,13 @@ angular.module('flowableApp')
         // Indirect binding between selected task in parent scope to have control over display
         // before actual selected task is switched
         processInstance: $scope.selectedProcessInstance,
-		processInstanceReportId:null,
-		reportFields:null
+		reportAppUrl:null
     };
 
     $scope.$watch('selectedProcessInstance', function(newValue) {
         if (newValue && newValue.id) {
             $scope.model.processUpdating = true;
             $scope.model.processInstance = newValue;
-
             $scope.getProcessInstance(newValue.id);
         }
     });
@@ -65,77 +63,22 @@ angular.module('flowableApp')
                 $scope.model.processInstance = response;
                 $scope.loadProcessTasks();
                 $scope.loadComments();
-				//$scope.getProcessId(response);
+				$scope.hasReport(response.processDefinitionKey,response.id);
             }).
             error(function(response, status, headers, config) {
                 console.log('Something went wrong: ' + response);
             });
     };
 	
-	$scope.getProcessId = function(processInstance) {
-		$http({method: 'GET', url: FLOWABLE.CONFIG.contextRoot + '/app/rest/models/?filter=processes&filterText='+processInstance.processDefinitionName+'&modelType=0&sort=modifiedDesc'}).
-            success(function(response, status, headers, config) {
-				if(response.total == 1){
-					$scope.model.processInstanceReportId = response.data[response.start].id;
-				}
-				
-				if(response.total > 1){
-					var idx = 0;
-					for(;idx<response.total;idx++){
-						if(processInstance.key == response.data[idx].key){
-							$scope.model.processInstanceReportId = response.data[idx].id;
-							break;
-						}
-					}
-				}
-				
-				if($scope.model.processInstanceReportId != null){
-					$scope.getProcessReportKey($scope.model.processInstanceReportId);
-				}
-                
-            }).
-            error(function(response, status, headers, config) {
-                console.log('Something went wrong: ' + response);
-            });
-    };
-	
-	$scope.getProcessReportKey = function(processId) {
-		var _data = new Date();
-		$http({method: 'GET', url: FLOWABLE.CONFIG.contextRoot + '/app/rest/models/'+processId+'/editor/json?version='+data.getTime()}).
-            success(function(response, status, headers, config) {
-				$scope.getReports(response.properties.process_report);
-            }).
-            error(function(response, status, headers, config) {
-                console.log('Something went wrong: ' + response);
-            });
-    };
-	
-	$scope.getReports = function(reportKey) {
-		$http({method: 'GET', url: FLOWABLE.CONFIG.contextRoot + '/app/rest/models?filter=forms&modelType=5&sort=modifiedDesc'}).
-            success(function(response, status, headers, config) {
-				var idx = 0;
-				for(;idx<response.total;idx++){
-					if(reportKey == response.data[idx].key){
-						$scope.getReportFields(response.data[idx]);
-						break;
-					}
-				}
-            }).
-            error(function(response, status, headers, config) {
-                console.log('Something went wrong: ' + response);
-            });
-    };
-	
-	$scope.getReportFields = function(report) {
-		$http({method: 'GET', url: FLOWABLE.CONFIG.contextRoot + '/app/rest/form-models/'+report.id}).
-            success(function(response, status, headers, config) {
-				$scope.model.reportFields = response.fields;
-				console.log(response.fields);
-            }).
-            error(function(response, status, headers, config) {
-                console.log('Something went wrong: ' + response);
-            });
-    };
+	$scope.hasReport = function(key,id){
+		$http({method: 'GET', url: FLOWABLE.CONFIG.contextRoot + '/app/rest/content/'+key+'/task/process/hasreport'}).
+        success(function(response, status, headers, config) {
+			if(response.reportKey != ""){
+				$scope.model.reportAppUrl = FLOWABLE.CONFIG.contextRoot + '/app/rest/content/' + response.reportKey + '/'+id+'/report';
+			}
+        }).
+        error(function(response, status, headers, config) {});
+	}
 
     $rootScope.loadProcessTasks = function() {
 

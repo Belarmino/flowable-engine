@@ -215,6 +215,7 @@ angular.module('flowableApp')
         $scope.model.loading = true;
         $scope.model.formData = undefined;
         $scope.model.hasFormKey = false;
+		$scope.model.reportAppUrl = null;
         if ($scope.model.task.formKey) {
             $scope.model.hasFormKey = true;
         }
@@ -224,7 +225,8 @@ angular.module('flowableApp')
 
                 // Do not replace the model, as it's still used in the task-list
                 angular.extend($scope.model.task, response);
-
+				console.log("response",response);
+				
                 $scope.model.loading = false;
                 $scope.noSuchTask = false;
 
@@ -253,12 +255,24 @@ angular.module('flowableApp')
                 }
 
                 $scope.model.taskUpdating = false;
+				
+				$scope.hasReport(response.processDefinitionKey,response.name,response.processInstanceId);
             }).
             error(function(response, status, headers, config) {
                 $scope.noSuchTask = true;
             });
     };
 
+	$scope.hasReport = function(key,name,id){
+		$http({method: 'GET', url: FLOWABLE.CONFIG.contextRoot + '/app/rest/content/'+key+'/' + name + '/task/hasreport'}).
+        success(function(response, status, headers, config) {
+			if(response.reportKey != ""){
+				$scope.model.reportAppUrl = FLOWABLE.CONFIG.contextRoot + '/app/rest/content/' + response.reportKey + '/'+id+'/report';
+			}
+        }).
+        error(function(response, status, headers, config) {});
+	}
+	
     $scope.$watch('model.task.involvedPeople', function(newValue) {
         $scope.refreshInvolvmentSummary();
     }, true);

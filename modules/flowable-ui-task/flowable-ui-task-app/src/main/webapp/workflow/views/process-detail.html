@@ -58,7 +58,8 @@
             <span title="{{model.processInstance.started | dateformat}}">{{model.processInstance.started | dateformat:'fromNow'}}</span>
             <span class="label" ng-show="model.processInstance.ended">{{'PROCESS.FIELD.ENDED' | translate}}: </span>
             <span ng-show="model.processInstance.ended" title="{{model.processInstance.ended | dateformat}}">{{model.processInstance.ended | dateformat:'fromNow'}}</span>
-        </div>
+			<span class="label" ng-show="model.processInstance.ended" ng-if="model.reportAppUrl != null"><a href="{{model.reportAppUrl}}">Report</a></span>
+		</div>
     </div>
 
     <div class="content clearfix split" auto-height offset="6" ng-if="!newProcessInstance && model.processInstance">
